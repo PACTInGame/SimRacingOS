@@ -12,6 +12,7 @@ from VehicleModel import VehicleModel
 
 class LFSConnection:
     def __init__(self):
+        self.penalty = False
         self.track = None
         self.text_entry = None
         self.in_game_cam = None
@@ -22,7 +23,7 @@ class LFSConnection:
         self.vehicleID = 0
         self.obtain_PLID = True
         self.on_track = False
-        self.vehicle_model = VehicleModel()
+        self.vehicle_model = VehicleModel(self)
         self.game_time = 0
         self.is_connected = False
         self.current_lap_invalid = False
@@ -32,6 +33,15 @@ class LFSConnection:
         self.laps_done = 0
         self.uebung = ""
         self.hit_an_object = False
+        self.crossed_checkpoint1 = False
+        self.crossed_checkpoint2 = False
+        self.crossed_checkpoint3 = False
+        self.came_to_standstill = False
+        self.brake_distances = []
+        self.speeds = []
+        self.brake_distance_start = 0
+        self.brake_speed_start = 0
+
 
     def outgauge_packet(self, outgauge, packet):
         # TODO handle outgauge timeout
@@ -76,7 +86,9 @@ class LFSConnection:
                         )
 
     def get_car_data(self, insim, mci):
-        pass
+        for car in mci.Info:
+            if car.PLID == self.vehicleID:
+                self.vehicle_model.update_car_data(car)
 
     def send_message(self, message):
         print(message, "sent")
@@ -129,10 +141,23 @@ class LFSConnection:
             data[username][track_id] = []
 
         # Append the new laptime and split times to the user's track data
-        data[username][track_id].append({
-            "laptime": laptime,
-            "splittimes": splittimes
-        })
+        if self.uebung == "Notbremsung" or self.uebung == "Notbremsung_Ausweichen":
+            data[username][track_id].append({
+                "laptime": laptime,
+                "splittimes": splittimes,
+                "brake_distance": self.brake_distances
+            })
+        elif self.uebung == "Ausweichen":
+            data[username][track_id].append({
+                "laptime": laptime,
+                "splittimes": splittimes,
+                "speeds": self.speeds
+            })
+        else:
+            data[username][track_id].append({
+                "laptime": laptime,
+                "splittimes": splittimes
+            })
 
         # Save the updated data back to the file
         with open(filename, 'w') as file:
@@ -171,6 +196,20 @@ class LFSConnection:
             if self.next_hotlap_invalid:
                 self.next_hotlap_invalid = False
                 self.current_lap_invalid = True
+
+    def get_checkpoint(self, number):
+        # Use bitwise AND with 3 (binary 11) to get first two bits
+        first_two_bits = number & 3
+
+        # Compare first two bits
+        checkpoints = {
+            0b00: 3,
+            0b01: 0,
+            0b10: 1,
+            0b11: 2
+        }
+
+        return checkpoints.get(first_two_bits, -1)
 
     def insim_state(self, insim, sta):
         """
@@ -215,9 +254,28 @@ class LFSConnection:
     def hit_object(self, insim, obh):
         self.hit_an_object = True
 
+    def penalty_handling(self, insim, pen):
+        print(pen.Reason)
+        self.penalty = True
+
+    def insim_checkpoints(self, insim, uco):
+        if uco.UCOAction == pyinsim.UCO_CP_FWD:
+            cp = self.get_checkpoint(uco.Info.Flags)
+            if cp == 0:
+                self.crossed_checkpoint1 = True
+                self.brake_distance_start = self.vehicle_model.position_mci
+                self.brake_speed_start = self.vehicle_model.speed
+            elif cp == 1:
+                self.crossed_checkpoint2 = True
+            elif cp == 2:
+                self.crossed_checkpoint1 = False
+                self.crossed_checkpoint2 = False
+                self.came_to_standstill = False
+
     def run(self):
         self.insim = pyinsim.insim(b'127.0.0.1', 29999, Admin=b'', Prefix=b"$",
-                                   Flags=pyinsim.ISF_MCI | pyinsim.ISF_HLV | pyinsim.ISF_OBH | pyinsim.ISF_LOCAL, Interval=200)
+                                   Flags=pyinsim.ISF_MCI | pyinsim.ISF_HLV | pyinsim.ISF_OBH | pyinsim.ISF_LOCAL,
+                                   Interval=50)
         self.insim.bind(pyinsim.ISP_LAP, self.get_laptimes)
         self.insim.bind(pyinsim.ISP_SPX, self.get_split_times)
         self.insim.bind(pyinsim.ISP_STA, self.insim_state)
@@ -227,6 +285,8 @@ class LFSConnection:
         self.insim.bind(pyinsim.ISP_HLV, self.hot_lap_validity)
         self.insim.bind(pyinsim.ISP_BTC, self.button_click)
         self.insim.bind(pyinsim.ISP_OBH, self.hit_object)
+        self.insim.bind(pyinsim.ISP_UCO, self.insim_checkpoints)
+        self.insim.bind(pyinsim.ISP_PEN, self.penalty_handling)
         self.start_outgauge()
         self.start_outsim()
         pyinsim.run()

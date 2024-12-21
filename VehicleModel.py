@@ -7,7 +7,10 @@ import numpy as np
 import pyinsim
 
 class VehicleModel:
-    def __init__(self):
+    def __init__(self, connector):
+        self.speed_mci = None
+        self.position_mci = None
+        self.connector = connector
         # Existing attributes
         self.speed = 0.0
         self.previous_speed = 0.0
@@ -85,10 +88,22 @@ class VehicleModel:
         self.turned_in = False
         self.turning_in_counter = 0
         self.difference_in_ang_vel = 0
+        self.time_last_speed_update = time.perf_counter()
+        self.distance_travelled = 0
 
     def update_outgauge(self, packet):
         self.previous_speed = self.speed
+        # Calculate distance increment: speed * time
         self.speed = packet.Speed * 3.6  # Convert to km/h
+        if self.speed < 1 and self.connector.crossed_checkpoint1 and not self.connector.came_to_standstill:
+            self.connector.came_to_standstill = True
+            self.connector.brake_distances.append([pyinsim.length(pyinsim.dist(self.position_mci,
+                                                                               self.connector.brake_distance_start)),
+                                                   self.connector.brake_speed_start])
+            self.connector.brake_distance_start = 0
+            self.connector.brake_speed_start = 0
+            print("Brake distance: ", self.connector.brake_distances)
+
         self.dynamic = self.speed - self.previous_speed
         self.rpm = packet.RPM
         self.fuel = packet.Fuel
@@ -137,6 +152,11 @@ class VehicleModel:
 
     def estimate_road_slope(self):
         pass
+
+    def update_car_data(self, car):
+        self.position_mci = car.X, car.Y, car.Z
+        self.speed_mci = car.Speed
+
 
 
 

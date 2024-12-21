@@ -11,11 +11,11 @@ def start_hotlap_blackwood(ui_manager):
     lfs_interface.send_commands_to_lfs([b"/spec", b"/car FZ5", b"/join"])
     time.sleep(2)
     ui_manager.close_screen()
-    pyautogui.click(50, 1137)
+    pyautogui.click(50, 1070)
     time.sleep(0.1)
-    pyautogui.click(1811, 630)
+    pyautogui.click(1664, 574)
     time.sleep(0.5)
-    pyautogui.click(1900, 1150)
+    pyautogui.click(1910, 1070)
     ui_manager.draw_buttons()
     ui_manager.os.lfs_interface.track_uebung("HotlapBL1")
 
@@ -40,7 +40,7 @@ def start_b1_lenken(ui_manager):
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track BL4"])
     time.sleep(3)
-    lfs_interface.send_commands_to_lfs([b"/axload Lenkradhaltung"])  # TODO change to Lenkradhaltung
+    lfs_interface.send_commands_to_lfs([b"/axload Lenkradhaltung"])
     time.sleep(0.7)
     lfs_interface.send_commands_to_lfs([b"/spec", b"/car FZ5"])
     time.sleep(0.4)
@@ -56,7 +56,7 @@ def start_b1_notbremsung(ui_manager):
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track BL4"])
     time.sleep(3)
-    lfs_interface.send_commands_to_lfs([b"/axload Notbremsung"])  # TODO change to Lenkradhaltung
+    lfs_interface.send_commands_to_lfs([b"/axload Notbremsung"])
     time.sleep(0.7)
     lfs_interface.send_commands_to_lfs([b"/spec", b"/car FZ5"])
     time.sleep(0.4)
@@ -66,3 +66,34 @@ def start_b1_notbremsung(ui_manager):
     ui_manager.close_screen()
     ui_manager.draw_buttons()
     ui_manager.os.lfs_interface.track_uebung("Notbremsung")
+
+
+def start_b1_notbremsung_ausweichen(ui_manager):
+    lfs_interface = ui_manager.os.lfs_interface
+    lfs_interface.send_commands_to_lfs([b"/track BL4"])
+    time.sleep(3)
+    lfs_interface.send_commands_to_lfs([b"/axload Notbremsung_Ausweichen"])
+    time.sleep(0.7)
+    lfs_interface.send_commands_to_lfs([b"/spec", b"/car FZ5"])
+    time.sleep(0.4)
+    lfs_interface.send_commands_to_lfs([b"/join"])
+    time.sleep(0.3)
+    lfs_interface.send_commands_to_lfs([b"/ready"])
+    ui_manager.close_screen()
+    ui_manager.draw_buttons()
+    ui_manager.os.lfs_interface.track_uebung("Notbremsung_Ausweichen")
+
+def start_b1_ausweichen(ui_manager):
+    lfs_interface = ui_manager.os.lfs_interface
+    lfs_interface.send_commands_to_lfs([b"/track BL4"])
+    time.sleep(3)
+    lfs_interface.send_commands_to_lfs([b"/axload Ausweichen"])
+    time.sleep(0.7)
+    lfs_interface.send_commands_to_lfs([b"/spec", b"/car FZ5"])
+    time.sleep(0.4)
+    lfs_interface.send_commands_to_lfs([b"/join"])
+    time.sleep(0.3)
+    lfs_interface.send_commands_to_lfs([b"/ready"])
+    ui_manager.close_screen()
+    ui_manager.draw_buttons()
+    ui_manager.os.lfs_interface.track_uebung("Ausweichen")

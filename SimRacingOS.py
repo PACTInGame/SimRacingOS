@@ -1,3 +1,5 @@
+import pygame
+
 from SimRacingUI import SimRacingUI
 from lfs_interface import LFSInterface
 
@@ -20,12 +22,10 @@ class SimRacingOS:
             if self.sim_racing_ui == "stopped":
                 self.start_ui()
 
-    def check_wheel_connected(self):  # TODO change dummy to actual wheel connection
-        if self.retries == 100:
-            return True
-        else:
-            self.retries += 1
-            return False
+    def check_wheel_connected(self):
+        pygame.joystick.init()
+        count = pygame.joystick.get_count()
+        return count > 1
 
     def start_ui(self):
         self.sim_racing_ui = "started"

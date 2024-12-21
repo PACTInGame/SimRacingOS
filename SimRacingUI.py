@@ -1,14 +1,12 @@
-import sys
 import threading
-import time
-
 import pygame
 import win32gui
 from pynput import keyboard
 
 import config
 import pyinsim
-from race_type_functions import start_hotlap_blackwood, start_b1_lenken, start_b1_notbremsung
+from race_type_functions import start_hotlap_blackwood, start_b1_lenken, start_b1_notbremsung, \
+    start_b1_notbremsung_ausweichen, start_b1_ausweichen
 
 
 class SimRacingUI:
@@ -54,21 +52,6 @@ class SimRacingUI:
         if self.hovered_over:
             self.screen.blit(self.hover_image, self.hovered_over)
 
-    def setup_keyboard_listener(self):
-        self.listener = keyboard.Listener(on_press=self.on_press)
-        self.listener_thread = threading.Thread(target=self.listener.start)
-        self.listener_thread.start()
-
-    def on_press(self, key):
-        if getattr(key, 'char', None) == 'z':
-            print("The 'z' key was pressed.")
-            self.os.lfs_interface.send_commands_to_lfs([b"/entry"])
-            while self.os.lfs_interface.lfs_connector.on_track:
-                pass
-            self.os.lfs_interface.start_singleplayer_after_track()
-            self.os.sim_racing_ui = "stopped"
-            self.stop_listener()
-
     def draw_buttons(self):
         self.os.lfs_interface.lfs_connector.send_button(
             1, pyinsim.ISB_DARK | pyinsim.ISB_CLICK, 100, 0, 25, 10, "Restart Task"
@@ -79,7 +62,7 @@ class SimRacingUI:
 
     def draw_info_button(self, text):
         self.os.lfs_interface.lfs_connector.send_button(
-            3, pyinsim.ISB_DARK, 80, 70, 60, 20, text
+            3, pyinsim.ISB_DARK, 80, 50, 100, 20, text
         )
 
     def del_info_button(self):
@@ -116,7 +99,6 @@ class SimRacingUI:
             functionality = functions.get(position)
             if functionality == "start_hotlap_bl":
                 start_hotlap_blackwood(self)
-                self.setup_keyboard_listener()
             if functionality == "b1_training":
                 self.current_screen = "b1_selection"
         elif self.current_screen == "b1_selection":
@@ -124,11 +106,12 @@ class SimRacingUI:
             functionality = functions.get(position)
             if functionality == "Lenkradhaltung":
                 start_b1_lenken(self)
-                self.setup_keyboard_listener()
             elif functionality == "Notbremsung":
                 start_b1_notbremsung(self)
-                self.setup_keyboard_listener()
-                # TODO get rid of keyboard listener
+            elif functionality == "Notbremsung_Ausweichen":
+                start_b1_notbremsung_ausweichen(self)
+            elif functionality == "Ausweichen":
+                start_b1_ausweichen(self)
 
     def find_buttons_ui(self, mouse_pos):
         if self.current_screen == "main_menu":
