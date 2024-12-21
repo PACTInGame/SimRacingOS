@@ -1,5 +1,6 @@
 import time
 
+import keyboard
 import pyautogui
 import pygame
 
@@ -37,6 +38,9 @@ def start_hotlap_westhill(ui_manager):
 
 
 def start_b1_lenken(ui_manager):
+    ui_manager.draw_explanation("Lenkradhaltung")
+    pygame.display.flip()
+    pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track BL4"])
     time.sleep(3)
@@ -45,7 +49,11 @@ def start_b1_lenken(ui_manager):
     lfs_interface.send_commands_to_lfs([b"/spec", b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
-    time.sleep(0.3)
+    ui_manager.draw_explanation("Lenkradhaltung-enter") # TODO Refactor all to be one function
+    pygame.display.flip()
+    pygame.display.update()
+    keyboard.wait("enter")
+    time.sleep(0.2)
     lfs_interface.send_commands_to_lfs([b"/ready"])
     ui_manager.close_screen()
     ui_manager.draw_buttons()

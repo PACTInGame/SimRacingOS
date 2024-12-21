@@ -2,10 +2,13 @@ import pygame
 
 from SimRacingUI import SimRacingUI
 from lfs_interface import LFSInterface
+from login_screen import login_window
 
 
 class SimRacingOS:
     def __init__(self):
+        #self.user_name, self.qnummer = login_window() # TODO use login data for leaderboard data
+        #print(f"Logged in as: {self.user_name, self.qnummer}")
         self.sim_racing_ui = None
         self.UI = None
         self.running = True

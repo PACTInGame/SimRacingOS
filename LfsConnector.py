@@ -131,7 +131,6 @@ class LFSConnection:
         else:
             # Create an empty dictionary if the file does not exist
             data = {}
-
         # Check if the user exists in the data
         if username not in data:
             data[username] = {}
@@ -142,10 +141,13 @@ class LFSConnection:
 
         # Append the new laptime and split times to the user's track data
         if self.uebung == "Notbremsung" or self.uebung == "Notbremsung_Ausweichen":
+            speeds = [value[1] for value in self.brake_distances]
+            distances = [value[0] for value in self.brake_distances]
             data[username][track_id].append({
                 "laptime": laptime,
                 "splittimes": splittimes,
-                "brake_distance": self.brake_distances
+                "brake_distances": distances,
+                "speeds": speeds
             })
         elif self.uebung == "Ausweichen":
             data[username][track_id].append({
@@ -189,7 +191,7 @@ class LFSConnection:
             print("Next Lap invalid", self.next_hotlap_invalid)
             if not self.current_lap_invalid:
                 print(f"Store laptime for {self.vehicleID}, {self.track.decode}, {str(lap.LTime)}")
-                self.store_laptime("Robert", self.track.decode(), str(lap.LTime), self.splittimes)
+                self.store_laptime("John", self.track.decode(), lap.LTime, self.splittimes)
 
             else:
                 self.current_lap_invalid = False

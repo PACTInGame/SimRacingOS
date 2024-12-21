@@ -29,14 +29,8 @@ class SimRacingUI:
             self.draw_main_menu()
         elif self.current_screen == "wheel_prompt":
             self.draw_wheel_prompt()
-        elif self.current_screen == "leaderboard":
-            self.draw_leaderboard()
         elif self.current_screen == "b1_selection":
             self.draw_b1_selection()
-
-    def draw_leaderboard(self):
-        # Draw leaderboard UI elements
-        pass
 
     def draw_b1_selection(self):
         bg = pygame.image.load("data/images/b1.png")
@@ -44,6 +38,10 @@ class SimRacingUI:
 
     def draw_wheel_prompt(self):
         bg = pygame.image.load("data/images/setup_wheel.png")
+        self.screen.blit(bg, (0, 0))
+
+    def draw_explanation(self, name):
+        bg = pygame.image.load(f"data/images/{name}.png")
         self.screen.blit(bg, (0, 0))
 
     def draw_main_menu(self):

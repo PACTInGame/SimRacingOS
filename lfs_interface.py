@@ -59,6 +59,7 @@ class LFSInterface:
         Args:
             uebung: Name of the exercise to run
         """
+        self.lfs_connector.obtain_PLID = True
         self.lfs_connector.uebung = uebung
         self.lfs_connector.laps_done = 0
         self.lfs_connector.splittimes = []
@@ -72,6 +73,7 @@ class LFSInterface:
         self.lfs_connector.brake_distance_start = 0
         self.lfs_connector.brake_speed_start = 0
         self.lfs_connector.speeds = []
+
 
         def handle_button_clicks():
             """Check and handle button clicks, returning whether restart or quit was requested"""
@@ -232,7 +234,7 @@ class LFSInterface:
             failed = None
 
             def check_speed():
-                print(connector.vehicle_model.speed)
+                connector.speeds.append(connector.vehicle_model.speed)
                 if connector.vehicle_model.speed < MIN_SPEED:
                     return time.perf_counter(), "Du warst nicht schnell genug."
                 return None, ""
