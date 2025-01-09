@@ -16,6 +16,7 @@ class VehicleModel:
         self.gear = 0
         self.angular_velocity = np.zeros(3)
         self.heading = 0.0
+        self.direction = 0.0
         self.pitch = 0.0
         self.roll = 0.0
         self.acceleration = np.zeros(3)
@@ -121,7 +122,7 @@ class VehicleModel:
 
     def update_outsim(self, packet):
         self.angular_velocity = np.array(packet.AngVel)
-        self.heading = packet.Heading
+        #self.heading = packet.Heading taking MCI value instead
         self.pitch = packet.Pitch
         self.roll = packet.Roll
         self.acceleration = np.array(packet.Accel)
@@ -132,7 +133,6 @@ class VehicleModel:
         self.engine_angular_velocity, self.max_torque_at_velocity = packet.EngineData
         self.current_lap_distance, self.indexed_distance = packet.Distance
         self.steer_torque = packet.Extra[0]
-
         for i, wheel in enumerate(packet.Wheels):
             self.tire_data[i]["susp_deflect"] = wheel["SuspDeflect"]
             self.tire_data[i]["steer"] = wheel["Steer"]
@@ -152,6 +152,8 @@ class VehicleModel:
     def update_car_data(self, car):
         self.position_mci = car.X, car.Y, car.Z
         self.speed_mci = car.Speed
+        self.direction = car.Direction
+        self.heading = car.Heading
 
 
 

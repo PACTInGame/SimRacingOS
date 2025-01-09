@@ -146,6 +146,9 @@ def start_b1_notbremsung(ui_manager):
 
 
 def start_b1_notbremsung_ausweichen(ui_manager):
+    ui_manager.draw_explanation("Notbremsung_Ausweichhen")
+    pygame.display.flip()
+    pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track BL4"])
     time.sleep(3)
@@ -156,7 +159,11 @@ def start_b1_notbremsung_ausweichen(ui_manager):
     lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
-    time.sleep(0.3)
+    ui_manager.draw_explanation("Notbremsung_Ausweichen-enter")  # TODO Refactor all to be one function
+    pygame.display.flip()
+    pygame.display.update()
+    keyboard.wait("enter")
+    time.sleep(0.2)
     lfs_interface.send_commands_to_lfs([b"/ready"])
     ui_manager.close_screen()
     ui_manager.draw_buttons()
@@ -164,6 +171,9 @@ def start_b1_notbremsung_ausweichen(ui_manager):
 
 
 def start_b1_ausweichen(ui_manager):
+    ui_manager.draw_explanation("Ausweichen")
+    pygame.display.flip()
+    pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track BL4"])
     time.sleep(3)
@@ -174,7 +184,11 @@ def start_b1_ausweichen(ui_manager):
     lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
-    time.sleep(0.3)
+    ui_manager.draw_explanation("Ausweichen-enter")  # TODO Refactor all to be one function
+    pygame.display.flip()
+    pygame.display.update()
+    keyboard.wait("enter")
+    time.sleep(0.2)
     lfs_interface.send_commands_to_lfs([b"/ready"])
     ui_manager.close_screen()
     ui_manager.draw_buttons()
@@ -182,6 +196,9 @@ def start_b1_ausweichen(ui_manager):
 
 
 def start_b1_untersteuern(ui_manager):
+    ui_manager.draw_explanation("untersteuern")
+    pygame.display.flip()
+    pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track BL4"])
     time.sleep(3)
@@ -192,7 +209,11 @@ def start_b1_untersteuern(ui_manager):
     lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
-    time.sleep(0.3)
+    ui_manager.draw_explanation("untersteuern-enter")  # TODO Refactor all to be one function
+    pygame.display.flip()
+    pygame.display.update()
+    keyboard.wait("enter")
+    time.sleep(0.2)
     lfs_interface.send_commands_to_lfs([b"/ready"])
     ui_manager.close_screen()
     ui_manager.draw_buttons()
@@ -200,6 +221,9 @@ def start_b1_untersteuern(ui_manager):
 
 
 def start_b1_uebersteuern(ui_manager):
+    ui_manager.draw_explanation("uebersteuern")
+    pygame.display.flip()
+    pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track BL4"])
     time.sleep(3)
@@ -210,8 +234,15 @@ def start_b1_uebersteuern(ui_manager):
     lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
-    time.sleep(0.3)
+    ui_manager.draw_explanation("uebersteuern-enter")  # TODO Refactor all to be one function
+    pygame.display.flip()
+    pygame.display.update()
+    keyboard.wait("enter")
+    time.sleep(0.2)
     lfs_interface.send_commands_to_lfs([b"/ready"])
     ui_manager.close_screen()
     ui_manager.draw_buttons()
     ui_manager.os.lfs_interface.track_uebung("uebersteuern")
+
+    # TODO BLACKWOOD SETUP FOR ALL B1 TASKS
+    # TODO einmal klicken wenn b1 task gestartet ist

@@ -17,7 +17,6 @@ class LFSInterface:
         self.lfs_connector = LFSConnection(self.os.user_name, self.os.qnummer)
         pyautogui.FAILSAFE = False
 
-
     def start_lfs(self):
         self.lfs_process = subprocess.Popen(config.LFS_PATH, cwd=os.path.dirname(config.LFS_PATH))
 
@@ -75,7 +74,6 @@ class LFSInterface:
         self.lfs_connector.brake_distance_start = 0
         self.lfs_connector.brake_speed_start = 0
         self.lfs_connector.speeds = []
-
 
         def handle_button_clicks():
             """Check and handle button clicks, returning whether restart or quit was requested"""
@@ -149,7 +147,7 @@ class LFSInterface:
 
         def handle_emergency_brake():
             """Handle the emergency brake exercise (Notbremsung)"""
-            MIN_SPEED = 78 if uebung == "Notbremsung" else 68 # km/h
+            MIN_SPEED = 78 if uebung == "Notbremsung" else 68  # km/h
             FAILURE_DISPLAY_TIME = 5  # seconds
 
             connector = self.lfs_connector
@@ -252,14 +250,12 @@ class LFSInterface:
                     if failed is not None:
                         self.os.UI.draw_info_button(reason)
 
-
                 if len(connector.splittimes) == 2 and checkpoint == 1:
                     checkpoint += 1
                     failed, reason = check_speed()
 
                     if failed is not None:
                         self.os.UI.draw_info_button(reason)
-
 
                 if len(connector.splittimes) == 3 and checkpoint == 2:
                     checkpoint += 1
@@ -273,7 +269,6 @@ class LFSInterface:
                     failed = time.perf_counter()
                     reason = "Du hast eine Pylone getroffen."
                     self.os.UI.draw_info_button(reason)
-
 
                 if self.lfs_connector.penalty and failed is None:
                     self.lfs_connector.penalty = False
@@ -293,7 +288,6 @@ class LFSInterface:
             elif quit or connector.laps_done == 1:
                 cleanup_and_quit()
 
-
         def handle_hotlap():
             """Handle hotlap exercises (HotlapBL1 and HotlapWE2)"""
             while True:
@@ -306,6 +300,7 @@ class LFSInterface:
                 cleanup_and_restart()
             elif quit:
                 cleanup_and_quit(True)
+
         def handle_practice():
             """Handle practice exercises (PracticeBL1 and PracticeWE2)"""
             while True:
@@ -317,13 +312,217 @@ class LFSInterface:
             if restart:
                 cleanup_and_restart()
             elif quit:
-                cleanup_and_quit(True)
+                cleanup_and_quit()
+
+        def handle_understeer():
+            def circular_difference(a, b, max_value=65536):
+                """
+                Calculate the circular difference between two numbers in a range of 0 to max_value.
+
+                Parameters:
+                    a (int): The first number.
+                    b (int): The second number.
+                    max_value (int): The maximum value of the range (default is 65536).
+
+                Returns:
+                    int: The circular difference between a and b.
+                """
+                # Ensure both numbers are within the range
+                a %= max_value
+                b %= max_value
+
+                # Calculate the circular difference
+                diff = abs(a - b)
+                return min(diff, max_value - diff) / 182.04
+
+            """Handle understeer exercise"""
+            understeering_l = False
+            understeering_r = False
+            understeering = False
+            understeering_timer = time.perf_counter()
+            understeering_count = 0
+            failed = None
+            FAILURE_DISPLAY_TIME = 5  # seconds
+
+            while True:
+                brake = self.lfs_connector.vehicle_model.brake
+                heading = self.lfs_connector.vehicle_model.heading
+                direction = self.lfs_connector.vehicle_model.direction
+                if circular_difference(heading,
+                                       direction) > 8 and self.lfs_connector.vehicle_model.speed > 7 and failed is None:
+                    failed = time.perf_counter()
+                    reason = "Dein Heck ist ausgebrochen."
+                    self.os.UI.draw_info_button(reason)
+                for i, tyre in enumerate(self.lfs_connector.vehicle_model.tire_data):
+                    if i == 2 or i == 3:
+                        steering = self.lfs_connector.vehicle_model.steering_input
+                        if (tyre.get("slip_fraction") < -0.007 and self.lfs_connector.vehicle_model.speed > 10 and
+                                (steering > 0.2 or steering < -0.2)):
+                            if i == 2:
+                                understeering_l = True
+                            elif i == 3:
+                                understeering_r = True
+                        else:
+                            if i == 2:
+                                understeering_l = False
+                            elif i == 3:
+                                understeering_r = False
+                if brake > 0.02:
+                    understeering_r = False
+                    understeering_l = False
+                if self.lfs_connector.hit_an_object and failed is None:
+                    self.lfs_connector.hit_an_object = False
+                    failed = time.perf_counter()
+                    reason = "Du hast eine Pylone getroffen."
+                    self.os.UI.draw_info_button(reason)
+                if understeering_r and understeering_l and not understeering:
+                    understeering = True
+                    understeering_timer = time.perf_counter()
+                    print("Understeering start")
+                elif (not understeering_r and not understeering_l) and understeering:
+                    understeering = False
+                    understeering_time = time.perf_counter() - understeering_timer
+                    if understeering_time > 0.95:
+                        understeering_count += 1
+                        print("Understeering for: ", understeering_time)
+
+                restart, quit = handle_button_clicks()
+                if understeering_count == 3:
+                    quit = True
+                    break
+                if restart or quit or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
+                    break
+
+            if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
+                cleanup_and_restart()
+            elif quit:
+                cleanup_and_quit()
+
+        def handle_oversteer():
+            """Handle understeer exercise"""
+
+            def circular_difference(a, b, max_value=65536):
+                """
+                Calculate the circular difference between two numbers in a range of 0 to max_value.
+
+                Parameters:
+                    a (int): The first number.
+                    b (int): The second number.
+                    max_value (int): The maximum value of the range (default is 65536).
+
+                Returns:
+                    int: The circular difference between a and b.
+                """
+                # Ensure both numbers are within the range
+                a %= max_value
+                b %= max_value
+
+                # Calculate the circular difference
+                diff = abs(a - b)
+                return min(diff, max_value - diff) / 182.04
+
+            """Handle understeer exercise"""
+            understeering_l = False
+            understeering_r = False
+            understeering = False
+            understeering_timer = time.perf_counter()
+            understeering_count = 0
+            failed = None
+            FAILURE_DISPLAY_TIME = 5  # seconds
+
+            uebersteuern = False
+            uebersteuern_timer = time.perf_counter()
+            uebersteuern_count = 0
+            uebersteuern_max_angle = 0
+            uebersteuern_data = []
+            avg_speed = [0,0]
+            while True:
+                brake = self.lfs_connector.vehicle_model.brake
+                heading = self.lfs_connector.vehicle_model.heading
+                direction = self.lfs_connector.vehicle_model.direction
+                if circular_difference(heading,
+                                       direction) > 10 and self.lfs_connector.vehicle_model.speed > 15 and not uebersteuern:
+
+                    uebersteuern = True
+                    uebersteuern_timer = time.perf_counter()
+
+                elif circular_difference(heading, direction) < 10 and uebersteuern:
+                    print("Oversteering end")
+                    uebersteuern = False
+                    uebersteuern_time = time.perf_counter() - uebersteuern_timer
+                    print(avg_speed)
+                    uebersteuern_distance = uebersteuern_time * 0.277 * (avg_speed[0] / avg_speed[1])
+                    print(uebersteuern_distance, uebersteuern_time)
+                    avg_speed = [0,0]
+                    if uebersteuern_time > 1 and uebersteuern_distance > 5:
+                        uebersteuern_count += 1
+                        print("Oversteering for: ", uebersteuern_time, "Distance: ", uebersteuern_distance)
+                        uebersteuern_data.append([uebersteuern_time, uebersteuern_distance, uebersteuern_max_angle])
+                        print(uebersteuern_data)
+
+                if uebersteuern:
+                    uebersteuern_max_angle = max(uebersteuern_max_angle, circular_difference(heading, direction))
+                    avg_speed[0] += self.lfs_connector.vehicle_model.speed
+                    avg_speed[1] += 1
+
+
+                for i, tyre in enumerate(self.lfs_connector.vehicle_model.tire_data):
+                    if i == 2 or i == 3:
+                        steering = self.lfs_connector.vehicle_model.steering_input
+                        if (tyre.get("slip_fraction") < -0.007 and self.lfs_connector.vehicle_model.speed > 10 and
+                                (steering > 0.2 or steering < -0.2)):
+                            if i == 2:
+                                understeering_l = True
+                            elif i == 3:
+                                understeering_r = True
+                        else:
+                            if i == 2:
+                                understeering_l = False
+                            elif i == 3:
+                                understeering_r = False
+                if brake > 0.02:
+                    understeering_r = False
+                    understeering_l = False
+
+                if self.lfs_connector.hit_an_object and failed is None:
+                    self.lfs_connector.hit_an_object = False
+                    failed = time.perf_counter()
+                    reason = "Du hast eine Pylone getroffen."
+                    self.os.UI.draw_info_button(reason)
+
+                if understeering_r and understeering_l and not understeering:
+                    understeering = True
+                    understeering_timer = time.perf_counter()
+
+                elif (not understeering_r and not understeering_l) and understeering:
+                    understeering = False
+                    understeering_time = time.perf_counter() - understeering_timer
+                    if understeering_time > 0.2:
+                        self.lfs_connector.hit_an_object = False
+                        failed = time.perf_counter()
+                        reason = "Du hast stark untersteuert."
+                        self.os.UI.draw_info_button(reason)
+
+                restart, quit = handle_button_clicks()
+                if uebersteuern_count == 3:
+                    quit = True
+                    break
+                if restart or quit or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
+                    break
+
+            if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
+                cleanup_and_restart()
+            elif quit:
+                cleanup_and_quit()
+
         # Map exercise names to their handler functions
         exercise_handlers = {
             "Lenkradhaltung": handle_steering_wheel,
             "Notbremsung": handle_emergency_brake,
             "Notbremsung_Ausweichen": handle_emergency_brake,
             "Ausweichen": handle_evade,
+            "untersteuern": handle_understeer,
+            "uebersteuern": handle_oversteer,
             "HotlapBL1": handle_hotlap,
             "HotlapWE2": handle_hotlap,
             "PracticeBL1": handle_practice,

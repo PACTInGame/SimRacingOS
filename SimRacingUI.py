@@ -4,7 +4,7 @@ import config
 import pyinsim
 from race_type_functions import start_hotlap_blackwood, start_b1_lenken, start_b1_notbremsung, \
     start_b1_notbremsung_ausweichen, start_b1_ausweichen, start_hotlap_westhill, start_practice_westhill, \
-    start_practice_blackwood
+    start_practice_blackwood, start_b1_untersteuern, start_b1_uebersteuern
 
 
 class SimRacingUI:
@@ -91,8 +91,8 @@ class SimRacingUI:
             (145, 238): "Notbremsung",
             (216, 410): "Notbremsung_Ausweichen",
             (286, 580): "Ausweichen",
-            (355, 735): "Untersteuern",
-            (418, 900): "Übersteuern",
+            (355, 735): "untersteuern",
+            (418, 900): "uebersteuern",
         }
 
     def check_button_function(self, position):
@@ -120,6 +120,10 @@ class SimRacingUI:
                 start_b1_notbremsung_ausweichen(self)
             elif functionality == "Ausweichen":
                 start_b1_ausweichen(self)
+            elif functionality == "untersteuern":
+                start_b1_untersteuern(self)
+            elif functionality == "uebersteuern":
+                start_b1_uebersteuern(self)
 
     def find_buttons_ui(self, mouse_pos):
         if self.current_screen == "main_menu":
