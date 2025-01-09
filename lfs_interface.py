@@ -15,6 +15,7 @@ class LFSInterface:
         self.lfs_process = None
         self.lfs_is_running = False
         self.lfs_connector = LFSConnection(self.os.user_name, self.os.qnummer)
+        pyautogui.FAILSAFE = False
 
 
     def start_lfs(self):

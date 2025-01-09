@@ -6,10 +6,12 @@ from login_screen import login_window
 
 class SimRacingOS:
     def __init__(self):
-        self.user_name, self.qnummer = login_window() # TODO use login data for leaderboard data
-        self.user_name = self.user_name.upper()
-        self.qnummer = self.qnummer.upper()
-        print(f"Logged in as: {self.user_name, self.qnummer}")
+        #self.user_name, self.qnummer = login_window() # TODO use login data for leaderboard data
+        #self.user_name = self.user_name.upper()
+        #self.qnummer = self.qnummer.upper()
+       # print(f"Logged in as: {self.user_name, self.qnummer}")
+        self.user_name = "TEST"
+        self.qnummer = "Q123456"
         self.sim_racing_ui = None
         self.UI = None
         self.running = True
