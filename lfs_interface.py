@@ -16,6 +16,7 @@ class LFSInterface:
         self.lfs_is_running = False
         self.lfs_connector = LFSConnection()
 
+
     def start_lfs(self):
         self.lfs_process = subprocess.Popen(config.LFS_PATH, cwd=os.path.dirname(config.LFS_PATH))
 
