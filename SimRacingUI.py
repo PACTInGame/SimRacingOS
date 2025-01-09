@@ -42,6 +42,10 @@ class SimRacingUI:
         bg = pygame.image.load(f"data/images/{name}.png")
         self.screen.blit(bg, (0, 0))
 
+    def draw_starting(self):
+        bg = pygame.image.load(f"data/images/starting.png")
+        self.screen.blit(bg, (0, 0))
+
     def draw_main_menu(self):
         bg = pygame.image.load("data/images/background_test.png")
         self.screen.blit(bg, (0, 0))

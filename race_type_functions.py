@@ -6,7 +6,11 @@ import pygame
 
 
 def start_hotlap_blackwood(ui_manager):
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
+
     lfs_interface.send_commands_to_lfs([b"/track BL1"])
     time.sleep(3)
     lfs_interface.send_commands_to_lfs([b"/spec"])
@@ -26,6 +30,9 @@ def start_hotlap_blackwood(ui_manager):
 
 
 def start_practice_blackwood(ui_manager):
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track BL1"])
     time.sleep(3)
@@ -44,6 +51,9 @@ def start_practice_blackwood(ui_manager):
 
 
 def start_hotlap_westhill(ui_manager):
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track WE2"])
     time.sleep(3)
@@ -65,6 +75,9 @@ def start_hotlap_westhill(ui_manager):
 
 
 def start_practice_westhill(ui_manager):
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track WE2"])
     time.sleep(3)
@@ -89,7 +102,9 @@ def start_b1_lenken(ui_manager):
     time.sleep(3)
     lfs_interface.send_commands_to_lfs([b"/axload Lenkradhaltung"])
     time.sleep(0.7)
-    lfs_interface.send_commands_to_lfs([b"/spec", b"/car FZ5"])
+    lfs_interface.send_commands_to_lfs([b"/spec"])
+    time.sleep(0.2)
+    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
     ui_manager.draw_explanation("Lenkradhaltung-enter")  # TODO Refactor all to be one function
@@ -109,7 +124,9 @@ def start_b1_notbremsung(ui_manager):
     time.sleep(3)
     lfs_interface.send_commands_to_lfs([b"/axload Notbremsung"])
     time.sleep(0.7)
-    lfs_interface.send_commands_to_lfs([b"/spec", b"/car FZ5"])
+    lfs_interface.send_commands_to_lfs([b"/spec"])
+    time.sleep(0.2)
+    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
     time.sleep(0.3)
@@ -125,7 +142,9 @@ def start_b1_notbremsung_ausweichen(ui_manager):
     time.sleep(3)
     lfs_interface.send_commands_to_lfs([b"/axload Notbremsung_Ausweichen"])
     time.sleep(0.7)
-    lfs_interface.send_commands_to_lfs([b"/spec", b"/car FZ5"])
+    lfs_interface.send_commands_to_lfs([b"/spec"])
+    time.sleep(0.2)
+    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
     time.sleep(0.3)
@@ -141,7 +160,9 @@ def start_b1_ausweichen(ui_manager):
     time.sleep(3)
     lfs_interface.send_commands_to_lfs([b"/axload Ausweichen"])
     time.sleep(0.7)
-    lfs_interface.send_commands_to_lfs([b"/spec", b"/car FZ5"])
+    lfs_interface.send_commands_to_lfs([b"/spec"])
+    time.sleep(0.2)
+    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
     time.sleep(0.3)
