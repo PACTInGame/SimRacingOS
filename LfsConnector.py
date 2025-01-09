@@ -121,6 +121,15 @@ class LFSConnection:
     def store_laptime(self, username, track_id, laptime, splittimes, filename='laptimes.json'):
         if self.uebung != "":
             track_id = track_id + self.uebung
+            if track_id == "BL1HotlapBL1":
+                track_id = "Hotlap Blackwood"
+            elif track_id == "WE2HotlapWE2":
+                track_id = "Hotlap Westhill"
+            elif track_id == "BL1PracticeBL1":
+                track_id = "Practice Blackwood"
+            elif track_id == "WE2PracticeWE2":
+                track_id = "PracticeWE2-"
+            # TODO add other names
         # Check if the file exists
         if os.path.exists(filename):
             # Load the existing data

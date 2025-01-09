@@ -297,7 +297,6 @@ class LFSInterface:
             """Handle hotlap exercises (HotlapBL1 and HotlapWE2)"""
             while True:
                 restart, quit = handle_button_clicks()
-                # print("hotlapping")
                 if restart or quit:
                     print("restart or quit")
                     break
@@ -306,7 +305,18 @@ class LFSInterface:
                 cleanup_and_restart()
             elif quit:
                 cleanup_and_quit(True)
+        def handle_practice():
+            """Handle practice exercises (PracticeBL1 and PracticeWE2)"""
+            while True:
+                restart, quit = handle_button_clicks()
+                if restart or quit:
+                    print("restart or quit")
+                    break
 
+            if restart:
+                cleanup_and_restart()
+            elif quit:
+                cleanup_and_quit(True)
         # Map exercise names to their handler functions
         exercise_handlers = {
             "Lenkradhaltung": handle_steering_wheel,
@@ -314,7 +324,9 @@ class LFSInterface:
             "Notbremsung_Ausweichen": handle_emergency_brake,
             "Ausweichen": handle_evade,
             "HotlapBL1": handle_hotlap,
-            "HotlapWE2": handle_hotlap
+            "HotlapWE2": handle_hotlap,
+            "PracticeBL1": handle_practice,
+            "PracticeWE2": handle_practice,
         }
 
         # Run the appropriate exercise handler
