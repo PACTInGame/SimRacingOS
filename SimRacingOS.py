@@ -1,5 +1,4 @@
 import pygame
-
 from SimRacingUI import SimRacingUI
 from lfs_interface import LFSInterface
 from login_screen import login_window
@@ -7,8 +6,10 @@ from login_screen import login_window
 
 class SimRacingOS:
     def __init__(self):
-        #self.user_name, self.qnummer = login_window() # TODO use login data for leaderboard data
-        #print(f"Logged in as: {self.user_name, self.qnummer}")
+        self.user_name, self.qnummer = login_window() # TODO use login data for leaderboard data
+        self.user_name = self.user_name.upper()
+        self.qnummer = self.qnummer.upper()
+        print(f"Logged in as: {self.user_name, self.qnummer}")
         self.sim_racing_ui = None
         self.UI = None
         self.running = True
@@ -28,7 +29,7 @@ class SimRacingOS:
     def check_wheel_connected(self):
         pygame.joystick.init()
         count = pygame.joystick.get_count()
-        return count > 1
+        return count > 0
 
     def start_ui(self):
         self.sim_racing_ui = "started"

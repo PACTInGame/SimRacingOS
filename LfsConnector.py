@@ -1,17 +1,15 @@
 import json
 import os
-import sys
 import threading
 import time
-
-import pyautogui
-
 import pyinsim
 from VehicleModel import VehicleModel
 
 
 class LFSConnection:
-    def __init__(self):
+    def __init__(self, username, qnummer):
+        self.username = username
+        self.qnummer = qnummer
         self.penalty = False
         self.track = None
         self.text_entry = None
@@ -191,7 +189,7 @@ class LFSConnection:
             print("Next Lap invalid", self.next_hotlap_invalid)
             if not self.current_lap_invalid:
                 print(f"Store laptime for {self.vehicleID}, {self.track.decode}, {str(lap.LTime)}")
-                self.store_laptime("John", self.track.decode(), lap.LTime, self.splittimes)
+                self.store_laptime(f"{self.username, self.qnummer}", self.track.decode(), lap.LTime, self.splittimes)
 
             else:
                 self.current_lap_invalid = False

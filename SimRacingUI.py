@@ -1,8 +1,5 @@
-import threading
 import pygame
 import win32gui
-from pynput import keyboard
-
 import config
 import pyinsim
 from race_type_functions import start_hotlap_blackwood, start_b1_lenken, start_b1_notbremsung, \

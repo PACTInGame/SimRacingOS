@@ -14,7 +14,7 @@ class LFSInterface:
         self.ui_manager = None
         self.lfs_process = None
         self.lfs_is_running = False
-        self.lfs_connector = LFSConnection()
+        self.lfs_connector = LFSConnection(self.os.user_name, self.os.qnummer)
 
 
     def start_lfs(self):
@@ -344,16 +344,16 @@ class LFSInterface:
 
     def start_singleplayer(self):
         time.sleep(0.3)
-        pyautogui.click(950, 1070)
+        pyautogui.click(2644, 1267)
         time.sleep(0.5)
-        pyautogui.click(1659, 514)
+        pyautogui.click(3549, 671)
         time.sleep(0.5)
-        pyautogui.click(132, 933)
+        pyautogui.click(1467, 1233)
         time.sleep(1)
 
     def start_singleplayer_after_track(self):
         time.sleep(0.3)
-        pyautogui.click(950, 1070)
+        pyautogui.click(2644, 1267)
         time.sleep(0.5)
-        pyautogui.click(1659, 514)
+        pyautogui.click(3549, 671)
         time.sleep(0.2)

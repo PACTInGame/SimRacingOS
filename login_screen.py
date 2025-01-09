@@ -6,7 +6,7 @@ import keyboard
 
 def login_window():
     pygame.init()
-    screen = pygame.display.set_mode((1920, 1080), pygame.NOFRAME)
+    screen = pygame.display.set_mode((5120, 1440), pygame.NOFRAME)
     pygame.display.set_caption("Login")
 
     # Colors
@@ -98,7 +98,7 @@ def login_window():
         screen.fill(WHITE)
 
         # Draw title
-        title_surface = font.render("Login System", True, BLACK)
+        title_surface = font.render("Login to Sim", True, BLACK)
         screen.blit(title_surface, (860, 200))
 
         # Draw input boxes with rounded corners and shadows
@@ -113,8 +113,8 @@ def login_window():
         pygame.draw.rect(screen, BLUE if active_pin else GRAY, pin_rect, 2)
 
         # Render texts
-        qnumber_surface = font.render("Q-Number:", True, BLACK)
-        name_surface = font.render("Full Name:", True, BLACK)
+        qnumber_surface = font.render("Q-Nummer:", True, BLACK)
+        name_surface = font.render("Vorname:", True, BLACK)
         pin_surface = font.render("PIN:", True, BLACK)
         input_qnumber_surface = font.render(qnumber_text, True, BLACK)
         input_name_surface = font.render(name_text, True, BLACK)
