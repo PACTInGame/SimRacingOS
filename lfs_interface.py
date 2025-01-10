@@ -377,7 +377,7 @@ class LFSInterface:
                         self.lfs_connector.drift_values = uebersteuern_data
                         print(uebersteuern_data)
 
-                if circular_difference(heading, direction) > 60 and self.lfs_connector.vehicle_model.speed > 5:
+                if circular_difference(heading, direction) > 70 and self.lfs_connector.vehicle_model.speed > 5 and failed is None:
                     failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast dich gedreht."
                     self.os.UI.draw_info_button(reason)
@@ -435,8 +435,12 @@ class LFSInterface:
                 if self.lfs_connector.laps_done == 1:
                     quit = True
                     break
-                if restart or quit or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
+                if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
+                    print("restarting")
                     restart = True
+                    break
+
+                if quit:
                     break
 
             if restart:

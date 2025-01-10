@@ -205,7 +205,7 @@ class LFSConnection:
             data[username][track_id].append({
                 "laptime": laptime,
                 "splittimes": splittimes,
-                "longest_time": max_time *1000,
+                "longest_time": max_time,
                 "longest_distance": max_dist,
                 "highest_angle": max_ang,
                 "total_dist": dist_total
