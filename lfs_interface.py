@@ -593,11 +593,11 @@ class LFSInterface:
                         print("Oversteering for: ", uebersteuern_time, "Distance: ", uebersteuern_distance)
                         uebersteuern_data.append([uebersteuern_time, uebersteuern_distance, uebersteuern_max_angle])
                         print(uebersteuern_data)
-                    elif uebersteuern_time > 5:
+                    elif uebersteuern_time > 6:
                         failed = time.perf_counter() if failed is None else failed
                         reason = "Du bist zu lange ausgebrochen."
                         self.os.UI.draw_info_button(reason)
-                if circular_difference(heading, direction) > 60 and self.lfs_connector.vehicle_model.speed > 5:
+                if circular_difference(heading, direction) > 75 and self.lfs_connector.vehicle_model.speed > 5 and failed is None:
                     failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast dich gedreht."
                     self.os.UI.draw_info_button(reason)
