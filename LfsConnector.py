@@ -39,6 +39,7 @@ class LFSConnection:
         self.speeds = []
         self.brake_distance_start = 0
         self.brake_speed_start = 0
+        self.drift_values = []
 
 
     def outgauge_packet(self, outgauge, packet):
@@ -128,7 +129,22 @@ class LFSConnection:
             elif track_id == "BL1PracticeBL1":
                 track_id = "Practice Blackwood"
             elif track_id == "WE2PracticeWE2":
-                track_id = "PracticeWE2-"
+                track_id = "Practice Westhill"
+            elif track_id == "BL4Lenkradhaltung":
+                track_id = "Lenkradhaltung"
+            elif track_id == "BL4Notbremsung":
+                track_id = "Notbremsung"
+            elif track_id == "BL4Notbremsung_Ausweichen":
+                track_id = "Notbremsung und Ausweichen"
+            elif track_id == "BL4Ausweichen":
+                track_id = "Ausweichen"
+            elif track_id == "Bl4untersteuer":
+                track_id = "Untersteuern"
+            elif track_id == "BL4uebersteuern":
+                track_id = "Übersteuern"
+            elif track_id == "LA1Driften":
+                track_id = "Driften"
+
             # TODO add other names
         # Check if the file exists
         if os.path.exists(filename):
@@ -162,6 +178,38 @@ class LFSConnection:
                 "splittimes": splittimes,
                 "speeds": self.speeds
             })
+        elif self.uebung == "uebersteuern":
+            max_time = 0
+            max_dist = 0
+            max_ang = 0
+            for split in splittimes:
+                max_time = max(split[0], max_time)
+                max_dist = max(split[1], max_dist)
+                max_ang = max(split[2], max_ang)
+            data[username][track_id].append({
+                "laptime": max_time * 1000,
+                "longest_distance": max_dist,
+                "highest_angle": max_ang
+            })
+        elif self.uebung == "Driften":
+            max_time = 0
+            max_dist = 0
+            max_ang = 0
+            dist_total = 0
+            for drift in self.drift_values:
+                max_time = max(drift[0], max_time)
+                max_dist = max(drift[1], max_dist)
+                dist_total += drift[1]
+                max_ang = max(drift[2], max_ang)
+
+            data[username][track_id].append({
+                "laptime": laptime,
+                "splittimes": splittimes,
+                "longest_time": max_time *1000,
+                "longest_distance": max_dist,
+                "highest_angle": max_ang,
+                "total_dist": dist_total
+            })
         else:
             data[username][track_id].append({
                 "laptime": laptime,
@@ -178,6 +226,7 @@ class LFSConnection:
         self.current_lap_invalid = True
 
     def get_split_times(self, insim, spx):
+        print("Split-time")
         if len(self.splittimes) == 0 and spx.Split == 1:
             self.splittimes.append(spx.STime)
         elif len(self.splittimes) == 1 and spx.Split == 2:
@@ -231,6 +280,8 @@ class LFSConnection:
             self.on_track = True
             insim.bind(pyinsim.ISP_MCI, self.get_car_data)
             insim.send(pyinsim.ISP_TINY, ReqI=255, SubT=pyinsim.TINY_NPL)
+            self.start_outgauge()
+            self.start_outsim()
 
         def start_menu_insim():
             self.time_menu_open = time.time()

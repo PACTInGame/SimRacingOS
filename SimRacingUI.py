@@ -4,7 +4,7 @@ import config
 import pyinsim
 from race_type_functions import start_hotlap_blackwood, start_b1_lenken, start_b1_notbremsung, \
     start_b1_notbremsung_ausweichen, start_b1_ausweichen, start_hotlap_westhill, start_practice_westhill, \
-    start_practice_blackwood, start_b1_untersteuern, start_b1_uebersteuern
+    start_practice_blackwood, start_b1_untersteuern, start_b1_uebersteuern, start_driften
 
 
 class SimRacingUI:
@@ -79,10 +79,10 @@ class SimRacingUI:
         return {
             (84, 94): "start_hotlap_bl",
             (517, 94): "b1_training",
-            (954, 94): "b2_training",
             (216, 427): "start_hotlap_we",
             (339, 745): "start_practice_bl",
-            (769, 745): "start_practice_we"
+            (769, 745): "start_practice_we",
+            (646, 425): "driften"
         }
 
     def get_functions_b1_training(self):
@@ -109,6 +109,8 @@ class SimRacingUI:
                 start_practice_blackwood(self)
             elif functionality == "start_practice_we":
                 start_practice_westhill(self)
+            elif functionality == "driften":
+                start_driften(self)
         elif self.current_screen == "b1_selection":
             functions = self.get_functions_b1_training()
             functionality = functions.get(position)

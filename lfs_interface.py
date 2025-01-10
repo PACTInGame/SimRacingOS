@@ -74,6 +74,7 @@ class LFSInterface:
         self.lfs_connector.brake_distance_start = 0
         self.lfs_connector.brake_speed_start = 0
         self.lfs_connector.speeds = []
+        self.lfs_connector.drift_values = []
 
         def handle_button_clicks():
             """Check and handle button clicks, returning whether restart or quit was requested"""
@@ -128,12 +129,12 @@ class LFSInterface:
                 restart, quit = handle_button_clicks()
                 if self.lfs_connector.hit_an_object and failed is None:
                     self.lfs_connector.hit_an_object = False
-                    failed = time.perf_counter()
+                    failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast eine Pylone getroffen."
                     self.os.UI.draw_info_button(reason)
                 if self.lfs_connector.penalty and failed is None:
                     self.lfs_connector.penalty = False
-                    failed = time.perf_counter()
+                    failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast eine Strafe erhalten."
                     self.os.UI.draw_info_button(reason)
                 if (self.lfs_connector.laps_done == 1 or
@@ -193,12 +194,12 @@ class LFSInterface:
                 # Check for collisions
                 if self.lfs_connector.hit_an_object and failed is None:
                     self.lfs_connector.hit_an_object = False
-                    failed = time.perf_counter()
+                    failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast eine Pylone getroffen."
                     self.os.UI.draw_info_button(reason)
 
                 if connector.crossed_checkpoint2 and not connector.came_to_standstill:
-                    failed = time.perf_counter()
+                    failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast nicht angehalten."
                     self.os.UI.draw_info_button(reason)
                     connector.crossed_checkpoint1 = False
@@ -207,7 +208,7 @@ class LFSInterface:
 
                 if self.lfs_connector.penalty and failed is None:
                     self.lfs_connector.penalty = False
-                    failed = time.perf_counter()
+                    failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast eine Strafe erhalten."
                     self.os.UI.draw_info_button(reason)
 
@@ -266,13 +267,13 @@ class LFSInterface:
                 # Check for collisions
                 if self.lfs_connector.hit_an_object and failed is None:
                     self.lfs_connector.hit_an_object = False
-                    failed = time.perf_counter()
+                    failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast eine Pylone getroffen."
                     self.os.UI.draw_info_button(reason)
 
                 if self.lfs_connector.penalty and failed is None:
                     self.lfs_connector.penalty = False
-                    failed = time.perf_counter()
+                    failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast eine Strafe erhalten."
                     self.os.UI.draw_info_button(reason)
 
@@ -307,6 +308,135 @@ class LFSInterface:
                 restart, quit = handle_button_clicks()
                 if restart or quit:
                     print("restart or quit")
+                    break
+
+            if restart:
+                cleanup_and_restart()
+            elif quit:
+                cleanup_and_quit()
+
+        def handle_driften():
+            """Handle driften exercise"""
+
+            def circular_difference(a, b, max_value=65536):
+                """
+                Calculate the circular difference between two numbers in a range of 0 to max_value.
+
+                Parameters:
+                    a (int): The first number.
+                    b (int): The second number.
+                    max_value (int): The maximum value of the range (default is 65536).
+
+                Returns:
+                    int: The circular difference between a and b.
+                """
+                # Ensure both numbers are within the range
+                a %= max_value
+                b %= max_value
+
+                # Calculate the circular difference
+                diff = abs(a - b)
+                return min(diff, max_value - diff) / 182.04
+
+            understeering_l = False
+            understeering_r = False
+            understeering = False
+            understeering_timer = time.perf_counter()
+            understeering_count = 0
+            failed = None
+            FAILURE_DISPLAY_TIME = 5  # seconds
+
+            uebersteuern = False
+            uebersteuern_timer = time.perf_counter()
+            uebersteuern_count = 0
+            uebersteuern_max_angle = 0
+            uebersteuern_data = []
+            avg_speed = [0, 0]
+            while True:
+                brake = self.lfs_connector.vehicle_model.brake
+                heading = self.lfs_connector.vehicle_model.heading
+                direction = self.lfs_connector.vehicle_model.direction
+                if circular_difference(heading,
+                                       direction) > 10 and self.lfs_connector.vehicle_model.speed > 15 and not uebersteuern:
+
+                    uebersteuern = True
+                    uebersteuern_timer = time.perf_counter()
+
+                elif circular_difference(heading, direction) < 10 and uebersteuern:
+                    print("Oversteering end")
+                    uebersteuern = False
+                    uebersteuern_time = time.perf_counter() - uebersteuern_timer
+                    print(avg_speed)
+                    uebersteuern_distance = uebersteuern_time * 0.277 * (avg_speed[0] / avg_speed[1])
+                    print(uebersteuern_distance, uebersteuern_time)
+                    avg_speed = [0, 0]
+                    if 1 < uebersteuern_time < 5 < uebersteuern_distance:
+                        uebersteuern_count += 1
+                        print("Oversteering for: ", uebersteuern_time, "Distance: ", uebersteuern_distance)
+                        uebersteuern_data.append([uebersteuern_time, uebersteuern_distance, uebersteuern_max_angle])
+                        self.lfs_connector.drift_values = uebersteuern_data
+                        print(uebersteuern_data)
+
+                if circular_difference(heading, direction) > 60 and self.lfs_connector.vehicle_model.speed > 5:
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du hast dich gedreht."
+                    self.os.UI.draw_info_button(reason)
+
+                if self.lfs_connector.penalty and failed is None:
+                    self.lfs_connector.penalty = False
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du hast eine Strafe erhalten."
+                    self.os.UI.draw_info_button(reason)
+
+                if uebersteuern:
+                    uebersteuern_max_angle = max(uebersteuern_max_angle, circular_difference(heading, direction))
+                    avg_speed[0] += self.lfs_connector.vehicle_model.speed
+                    avg_speed[1] += 1
+
+                for i, tyre in enumerate(self.lfs_connector.vehicle_model.tire_data):
+                    if i == 2 or i == 3:
+                        steering = self.lfs_connector.vehicle_model.steering_input
+                        if (tyre.get("slip_fraction") < -0.007 and self.lfs_connector.vehicle_model.speed > 10 and
+                                (steering > 0.2 or steering < -0.2)):
+                            if i == 2:
+                                understeering_l = True
+                            elif i == 3:
+                                understeering_r = True
+                        else:
+                            if i == 2:
+                                understeering_l = False
+                            elif i == 3:
+                                understeering_r = False
+                if brake > 0.02:
+                    understeering_r = False
+                    understeering_l = False
+
+                if self.lfs_connector.hit_an_object and failed is None:
+                    print("pylone getroffen drift")
+                    self.lfs_connector.hit_an_object = False
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du hast eine Pylone getroffen."
+                    self.os.UI.draw_info_button(reason)
+
+                if understeering_r and understeering_l and not understeering:
+                    understeering = True
+                    understeering_timer = time.perf_counter()
+
+                elif (not understeering_r and not understeering_l) and understeering:
+                    understeering = False
+                    understeering_time = time.perf_counter() - understeering_timer
+                    if understeering_time > 0.2:
+                        self.lfs_connector.hit_an_object = False
+                        failed = time.perf_counter() if failed is None else failed
+                        reason = "Du hast stark untersteuert."
+                        self.os.UI.draw_info_button(reason)
+
+                restart, quit = handle_button_clicks()
+                if self.lfs_connector.laps_done == 1:
+                    quit = True
+                    break
+                if restart or quit or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
+                    restart = True
                     break
 
             if restart:
@@ -350,7 +480,7 @@ class LFSInterface:
                 direction = self.lfs_connector.vehicle_model.direction
                 if circular_difference(heading,
                                        direction) > 8 and self.lfs_connector.vehicle_model.speed > 7 and failed is None:
-                    failed = time.perf_counter()
+                    failed = time.perf_counter() if failed is None else failed
                     reason = "Dein Heck ist ausgebrochen."
                     self.os.UI.draw_info_button(reason)
                 for i, tyre in enumerate(self.lfs_connector.vehicle_model.tire_data):
@@ -372,7 +502,7 @@ class LFSInterface:
                     understeering_l = False
                 if self.lfs_connector.hit_an_object and failed is None:
                     self.lfs_connector.hit_an_object = False
-                    failed = time.perf_counter()
+                    failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast eine Pylone getroffen."
                     self.os.UI.draw_info_button(reason)
                 if understeering_r and understeering_l and not understeering:
@@ -399,7 +529,7 @@ class LFSInterface:
                 cleanup_and_quit()
 
         def handle_oversteer():
-            """Handle understeer exercise"""
+            """Handle oversteer exercise"""
 
             def circular_difference(a, b, max_value=65536):
                 """
@@ -435,7 +565,7 @@ class LFSInterface:
             uebersteuern_count = 0
             uebersteuern_max_angle = 0
             uebersteuern_data = []
-            avg_speed = [0,0]
+            avg_speed = [0, 0]
             while True:
                 brake = self.lfs_connector.vehicle_model.brake
                 heading = self.lfs_connector.vehicle_model.heading
@@ -453,18 +583,25 @@ class LFSInterface:
                     print(avg_speed)
                     uebersteuern_distance = uebersteuern_time * 0.277 * (avg_speed[0] / avg_speed[1])
                     print(uebersteuern_distance, uebersteuern_time)
-                    avg_speed = [0,0]
-                    if uebersteuern_time > 1 and uebersteuern_distance > 5:
+                    avg_speed = [0, 0]
+                    if 1 < uebersteuern_time < 5 < uebersteuern_distance:
                         uebersteuern_count += 1
                         print("Oversteering for: ", uebersteuern_time, "Distance: ", uebersteuern_distance)
                         uebersteuern_data.append([uebersteuern_time, uebersteuern_distance, uebersteuern_max_angle])
                         print(uebersteuern_data)
+                    elif uebersteuern_time > 5:
+                        failed = time.perf_counter() if failed is None else failed
+                        reason = "Du bist zu lange ausgebrochen."
+                        self.os.UI.draw_info_button(reason)
+                if circular_difference(heading, direction) > 60 and self.lfs_connector.vehicle_model.speed > 5:
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du hast dich gedreht."
+                    self.os.UI.draw_info_button(reason)
 
                 if uebersteuern:
                     uebersteuern_max_angle = max(uebersteuern_max_angle, circular_difference(heading, direction))
                     avg_speed[0] += self.lfs_connector.vehicle_model.speed
                     avg_speed[1] += 1
-
 
                 for i, tyre in enumerate(self.lfs_connector.vehicle_model.tire_data):
                     if i == 2 or i == 3:
@@ -486,7 +623,7 @@ class LFSInterface:
 
                 if self.lfs_connector.hit_an_object and failed is None:
                     self.lfs_connector.hit_an_object = False
-                    failed = time.perf_counter()
+                    failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast eine Pylone getroffen."
                     self.os.UI.draw_info_button(reason)
 
@@ -499,12 +636,14 @@ class LFSInterface:
                     understeering_time = time.perf_counter() - understeering_timer
                     if understeering_time > 0.2:
                         self.lfs_connector.hit_an_object = False
-                        failed = time.perf_counter()
+                        failed = time.perf_counter() if failed is None else failed
                         reason = "Du hast stark untersteuert."
                         self.os.UI.draw_info_button(reason)
 
                 restart, quit = handle_button_clicks()
                 if uebersteuern_count == 3:
+                    self.lfs_connector.store_laptime(f"{self.os.user_name, self.os.qnummer}",
+                                                     self.lfs_connector.track.decode(), 0, uebersteuern_data)
                     quit = True
                     break
                 if restart or quit or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
@@ -527,6 +666,7 @@ class LFSInterface:
             "HotlapWE2": handle_hotlap,
             "PracticeBL1": handle_practice,
             "PracticeWE2": handle_practice,
+            "Driften": handle_driften,
         }
 
         # Run the appropriate exercise handler

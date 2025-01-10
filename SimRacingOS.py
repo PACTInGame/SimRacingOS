@@ -6,10 +6,10 @@ from login_screen import login_window
 
 class SimRacingOS:
     def __init__(self):
-        #self.user_name, self.qnummer = login_window() # TODO use login data for leaderboard data
-        #self.user_name = self.user_name.upper()
-        #self.qnummer = self.qnummer.upper()
-       # print(f"Logged in as: {self.user_name, self.qnummer}")
+        self.user_name, self.qnummer = login_window() # TODO use login data for leaderboard data
+        self.user_name = self.user_name.upper()
+        self.qnummer = self.qnummer.upper()
+        print(f"Logged in as: {self.user_name, self.qnummer}")
         self.user_name = "TEST"
         self.qnummer = "Q123456"
         self.sim_racing_ui = None
@@ -17,7 +17,7 @@ class SimRacingOS:
         self.running = True
         self.lfs_interface = LFSInterface(self)
         self.wheel_connected = False
-        self.retries = 0  # TODO change dummy to actual wheel connection
+        self.retries = 0
         self.connect_wheel()
         self.start_lfs()
         self.start_ui()
