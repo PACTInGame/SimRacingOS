@@ -14,8 +14,9 @@ class LFSInterface:
         self.ui_manager = None
         self.lfs_process = None
         self.lfs_is_running = False
-        self.lfs_connector = LFSConnection(self.os.user_name, self.os.qnummer)
+        self.lfs_connector = LFSConnection(self.os.user_name, self.os.qnummer, self.os)
         pyautogui.FAILSAFE = False
+        self.switched_to_menu = False
 
     def start_lfs(self):
         self.lfs_process = subprocess.Popen(config.LFS_PATH, cwd=os.path.dirname(config.LFS_PATH))
@@ -75,6 +76,7 @@ class LFSInterface:
         self.lfs_connector.brake_speed_start = 0
         self.lfs_connector.speeds = []
         self.lfs_connector.drift_values = []
+        self.switched_to_menu = False
 
         def handle_button_clicks():
             """Check and handle button clicks, returning whether restart or quit was requested"""
@@ -86,7 +88,10 @@ class LFSInterface:
                 self.lfs_connector.buttons_clicked.remove(1)
             if quit_requested:
                 self.lfs_connector.buttons_clicked.remove(2)
-
+            if not quit_requested:
+                if self.switched_to_menu:
+                    quit_requested = True
+                    self.switched_to_menu = False
             return restart_requested, quit_requested
 
         def cleanup_and_quit(hotlap=False):
@@ -122,7 +127,7 @@ class LFSInterface:
         def handle_steering_wheel():
             """Handle the steering wheel exercise (Lenkradhaltung)"""
             failed = None
-            FAILURE_DISPLAY_TIME = 3  # seconds
+            FAILURE_DISPLAY_TIME = 2  # seconds
             reason = ""
             while True:
 
@@ -148,8 +153,8 @@ class LFSInterface:
 
         def handle_emergency_brake():
             """Handle the emergency brake exercise (Notbremsung)"""
-            MIN_SPEED = 78 if uebung == "Notbremsung" else 68  # km/h
-            FAILURE_DISPLAY_TIME = 5  # seconds
+            MIN_SPEED = 75 if uebung == "Notbremsung" else 65  # km/h
+            FAILURE_DISPLAY_TIME = 2  # seconds
 
             connector = self.lfs_connector
 
@@ -174,7 +179,7 @@ class LFSInterface:
                     if failed is not None:
                         self.os.UI.draw_info_button(reason)
                     if uebung == "Notbremsung_Ausweichen":
-                        MIN_SPEED = 78
+                        MIN_SPEED = 75
 
                 if len(connector.splittimes) == 2 and checkpoint == 1:
                     checkpoint += 1
@@ -183,7 +188,7 @@ class LFSInterface:
                     if failed is not None:
                         self.os.UI.draw_info_button(reason)
                     if uebung == "Notbremsung_Ausweichen":
-                        MIN_SPEED = 88
+                        MIN_SPEED = 85
 
                 if len(connector.splittimes) == 3 and checkpoint == 2:
                     checkpoint += 1
@@ -226,8 +231,8 @@ class LFSInterface:
 
         def handle_evade():
             """Handle evasion exercise (Ausweichen)"""
-            MIN_SPEED = 68
-            FAILURE_DISPLAY_TIME = 5  # seconds
+            MIN_SPEED = 65
+            FAILURE_DISPLAY_TIME = 2  # seconds
 
             connector = self.lfs_connector
 
@@ -344,7 +349,7 @@ class LFSInterface:
             understeering_timer = time.perf_counter()
             understeering_count = 0
             failed = None
-            FAILURE_DISPLAY_TIME = 5  # seconds
+            FAILURE_DISPLAY_TIME = 2  # seconds
 
             uebersteuern = False
             uebersteuern_timer = time.perf_counter()
@@ -476,7 +481,7 @@ class LFSInterface:
             understeering_timer = time.perf_counter()
             understeering_count = 0
             failed = None
-            FAILURE_DISPLAY_TIME = 5  # seconds
+            FAILURE_DISPLAY_TIME = 2  # seconds
 
             while True:
                 brake = self.lfs_connector.vehicle_model.brake
@@ -562,7 +567,7 @@ class LFSInterface:
             understeering_timer = time.perf_counter()
             understeering_count = 0
             failed = None
-            FAILURE_DISPLAY_TIME = 5  # seconds
+            FAILURE_DISPLAY_TIME = 2  # seconds
 
             uebersteuern = False
             uebersteuern_timer = time.perf_counter()

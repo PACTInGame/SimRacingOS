@@ -101,172 +101,35 @@ def start_practice_westhill(ui_manager):
     ui_manager.os.lfs_interface.track_uebung("PracticeWE2")
 
 
-def start_b1_lenken(ui_manager):
-    ui_manager.draw_explanation("Lenkradhaltung")
-    pygame.display.flip()
-    pygame.display.update()
+def start_b1_uebung(ui_manager, uebung):
+
+    ui_manager.current_explain = uebung
+    ui_manager.current_screen = "explain"
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track BL4"])
-    time.sleep(3)
+    time.sleep(1)
+    time.sleep(1)
+    time.sleep(1)
     lfs_interface.send_commands_to_lfs([b"/weather 1"])
     time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/axload Lenkradhaltung"])
+    load_layout = f"/axload {uebung}"
+    load_layout = load_layout.encode()
+    lfs_interface.send_commands_to_lfs([load_layout])
     time.sleep(1)
     lfs_interface.send_commands_to_lfs([b"/spec"])
     time.sleep(0.2)
     lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
-    lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830TC"])
-    ui_manager.draw_explanation("Lenkradhaltung-enter")  # TODO Refactor all to be one function
-    pygame.display.flip()
-    pygame.display.update()
+    if uebung in ["Lenkradhaltung", "Notbremsung", "Notbremsung_Ausweichen", "Ausweichen", "Schnelles_Ausweichen"]:
+        lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830TC"])
+    else:
+        lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830"])
+    ui_manager.current_explain = f"{uebung}-enter"
     keyboard.wait("enter")
     time.sleep(0.2)
     lfs_interface.send_commands_to_lfs([b"/ready"])
-    ui_manager.close_screen()
-    ui_manager.draw_buttons()
-    ui_manager.os.lfs_interface.track_uebung("Lenkradhaltung")
-
-
-def start_b1_notbremsung(ui_manager):
-    ui_manager.draw_explanation("Notbremsung")
-    pygame.display.flip()
-    pygame.display.update()
-    lfs_interface = ui_manager.os.lfs_interface
-    lfs_interface.send_commands_to_lfs([b"/track BL4"])
-    time.sleep(3)
-    lfs_interface.send_commands_to_lfs([b"/weather 1"])
-    time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/axload Notbremsung"])
-    time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/spec"])
-    time.sleep(0.2)
-    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
-    time.sleep(0.4)
-    lfs_interface.send_commands_to_lfs([b"/join"])
-    lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830TC"])
-    ui_manager.draw_explanation("Notbremsung-enter")  # TODO Refactor all to be one function
-    pygame.display.flip()
-    pygame.display.update()
-    keyboard.wait("enter")
-    time.sleep(0.2)
-    lfs_interface.send_commands_to_lfs([b"/ready"])
-    ui_manager.close_screen()
-    ui_manager.draw_buttons()
-    ui_manager.os.lfs_interface.track_uebung("Notbremsung")
-
-
-def start_b1_notbremsung_ausweichen(ui_manager):
-    ui_manager.draw_explanation("Notbremsung_Ausweichen")
-    pygame.display.flip()
-    pygame.display.update()
-    lfs_interface = ui_manager.os.lfs_interface
-    lfs_interface.send_commands_to_lfs([b"/track BL4"])
-    time.sleep(3)
-    lfs_interface.send_commands_to_lfs([b"/weather 1"])
-    time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/axload Notbremsung_Ausweichen"])
-    time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/spec"])
-    time.sleep(0.2)
-    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
-    time.sleep(0.4)
-    lfs_interface.send_commands_to_lfs([b"/join"])
-    lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830TC"])
-    ui_manager.draw_explanation("Notbremsung_Ausweichen-enter")  # TODO Refactor all to be one function
-    pygame.display.flip()
-    pygame.display.update()
-    keyboard.wait("enter")
-    time.sleep(0.2)
-    lfs_interface.send_commands_to_lfs([b"/ready"])
-    ui_manager.close_screen()
-    ui_manager.draw_buttons()
-    ui_manager.os.lfs_interface.track_uebung("Notbremsung_Ausweichen")
-
-
-def start_b1_ausweichen(ui_manager):
-    ui_manager.draw_explanation("Ausweichen")
-    pygame.display.flip()
-    pygame.display.update()
-    lfs_interface = ui_manager.os.lfs_interface
-    lfs_interface.send_commands_to_lfs([b"/track BL4"])
-    time.sleep(3)
-    lfs_interface.send_commands_to_lfs([b"/weather 1"])
-    time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/axload Ausweichen"])
-    time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/spec"])
-    time.sleep(0.2)
-    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
-    time.sleep(0.4)
-    lfs_interface.send_commands_to_lfs([b"/join"])
-    lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830TC"])
-    ui_manager.draw_explanation("Ausweichen-enter")  # TODO Refactor all to be one function
-    pygame.display.flip()
-    pygame.display.update()
-    keyboard.wait("enter")
-    time.sleep(0.2)
-    lfs_interface.send_commands_to_lfs([b"/ready"])
-    ui_manager.close_screen()
-    ui_manager.draw_buttons()
-    ui_manager.os.lfs_interface.track_uebung("Ausweichen")
-
-
-def start_b1_untersteuern(ui_manager):
-    ui_manager.draw_explanation("untersteuern")
-    pygame.display.flip()
-    pygame.display.update()
-    lfs_interface = ui_manager.os.lfs_interface
-    lfs_interface.send_commands_to_lfs([b"/track BL4"])
-    time.sleep(3)
-    lfs_interface.send_commands_to_lfs([b"/weather 1"])
-    time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/axload untersteuern"])
-    time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/spec"])
-    time.sleep(0.2)
-    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
-    time.sleep(0.4)
-    lfs_interface.send_commands_to_lfs([b"/join"])
-    lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830"])
-    ui_manager.draw_explanation("untersteuern-enter")  # TODO Refactor all to be one function
-    pygame.display.flip()
-    pygame.display.update()
-    keyboard.wait("enter")
-    time.sleep(0.2)
-    lfs_interface.send_commands_to_lfs([b"/ready"])
-    ui_manager.close_screen()
-    ui_manager.draw_buttons()
-    ui_manager.os.lfs_interface.track_uebung("untersteuern")
-
-
-def start_b1_uebersteuern(ui_manager):
-    ui_manager.draw_explanation("uebersteuern")
-    pygame.display.flip()
-    pygame.display.update()
-    lfs_interface = ui_manager.os.lfs_interface
-    lfs_interface.send_commands_to_lfs([b"/track BL4"])
-    time.sleep(3)
-    lfs_interface.send_commands_to_lfs([b"/weather 1"])
-    time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/axload uebersteuern"])
-    time.sleep(1)
-    lfs_interface.send_commands_to_lfs([b"/spec"])
-    time.sleep(0.2)
-    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
-    time.sleep(0.4)
-    lfs_interface.send_commands_to_lfs([b"/join"])
-    lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830"])
-    ui_manager.draw_explanation("uebersteuern-enter")  # TODO Refactor all to be one function
-    pygame.display.flip()
-    pygame.display.update()
-    keyboard.wait("enter")
-    time.sleep(0.2)
-    lfs_interface.send_commands_to_lfs([b"/ready"])
-    ui_manager.close_screen()
-    ui_manager.draw_buttons()
-    ui_manager.os.lfs_interface.track_uebung("uebersteuern")
+    ui_manager.ready_for_start = uebung
 
 
 def start_driften(ui_manager):

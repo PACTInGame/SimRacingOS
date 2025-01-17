@@ -1,10 +1,13 @@
+import os
+import threading
+
 import pygame
 import win32gui
 import config
 import pyinsim
-from race_type_functions import start_hotlap_blackwood, start_b1_lenken, start_b1_notbremsung, \
-    start_b1_notbremsung_ausweichen, start_b1_ausweichen, start_hotlap_westhill, start_practice_westhill, \
-    start_practice_blackwood, start_b1_untersteuern, start_b1_uebersteuern, start_driften
+from login_screen import login_window
+from race_type_functions import start_hotlap_blackwood, start_hotlap_westhill, start_practice_westhill, \
+    start_practice_blackwood, start_driften, start_b1_uebung
 
 
 class SimRacingUI:
@@ -21,6 +24,8 @@ class SimRacingUI:
         self.hovered_over = None
         self.listener = None
         self.listener_thread = None
+        self.current_explain = ""
+        self.ready_for_start = ""
 
     def draw(self):
         if self.current_screen == "main_menu":
@@ -29,7 +34,13 @@ class SimRacingUI:
             self.draw_wheel_prompt()
         elif self.current_screen == "b1_selection":
             self.draw_b1_selection()
-
+        elif self.current_screen == "explain":
+            self.draw_explanation()
+        elif self.current_screen == "shutdown":
+            self.draw_shutdown()
+    def draw_shutdown(self):
+        bg = pygame.image.load("data/images/shutdown.png")
+        self.screen.blit(bg, (0, 0))
     def draw_b1_selection(self):
         bg = pygame.image.load("data/images/b1.png")
         self.screen.blit(bg, (0, 0))
@@ -38,8 +49,8 @@ class SimRacingUI:
         bg = pygame.image.load("data/images/setup_wheel.png")
         self.screen.blit(bg, (0, 0))
 
-    def draw_explanation(self, name):
-        bg = pygame.image.load(f"data/images/{name}.png")
+    def draw_explanation(self):
+        bg = pygame.image.load(f"data/images/{self.current_explain}.png")
         self.screen.blit(bg, (0, 0))
 
     def draw_starting(self):
@@ -75,6 +86,14 @@ class SimRacingUI:
             self.listener = None
             self.listener_thread = None
 
+    def change_user(self):
+        self.close_screen()
+        self.os.user_name, self.os.qnummer = login_window()
+        self.os.lfs_interface.lfs_connector.username = self.os.user_name
+        self.os.lfs_interface.lfs_connector.qnummer = self.os.qnummer
+        print(f"Logged in as: {self.os.user_name, self.os.qnummer}")
+        self.os.sim_racing_ui = "stopped"
+
     def get_functions_main_menu(self):
         return {
             (84, 94): "start_hotlap_bl",
@@ -82,7 +101,9 @@ class SimRacingUI:
             (216, 427): "start_hotlap_we",
             (339, 745): "start_practice_bl",
             (769, 745): "start_practice_we",
-            (646, 425): "driften"
+            (646, 425): "driften",
+            (1843, 44): "change_user",
+            (644, 1138): "shutdown"
         }
 
     def get_functions_b1_training(self):
@@ -93,6 +114,9 @@ class SimRacingUI:
             (286, 580): "Ausweichen",
             (355, 735): "untersteuern",
             (418, 900): "uebersteuern",
+            (1691, 36): "back_to_menu"
+
+
         }
 
     def check_button_function(self, position):
@@ -111,21 +135,23 @@ class SimRacingUI:
                 start_practice_westhill(self)
             elif functionality == "driften":
                 start_driften(self)
+            elif functionality == "change_user":
+                self.change_user()
+            elif functionality == "shutdown":
+                self.current_screen = "shutdown"
+                os.system("shutdown /s /f /t 60")
+
+
         elif self.current_screen == "b1_selection":
             functions = self.get_functions_b1_training()
             functionality = functions.get(position)
-            if functionality == "Lenkradhaltung":
-                start_b1_lenken(self)
-            elif functionality == "Notbremsung":
-                start_b1_notbremsung(self)
-            elif functionality == "Notbremsung_Ausweichen":
-                start_b1_notbremsung_ausweichen(self)
-            elif functionality == "Ausweichen":
-                start_b1_ausweichen(self)
-            elif functionality == "untersteuern":
-                start_b1_untersteuern(self)
-            elif functionality == "uebersteuern":
-                start_b1_uebersteuern(self)
+
+            if functionality == "back_to_menu":
+                self.current_screen = "main_menu"
+            else:
+                thread = threading.Thread(target=start_b1_uebung, args=(self, functionality))
+                thread.start()
+
 
     def find_buttons_ui(self, mouse_pos):
         if self.current_screen == "main_menu":
@@ -135,7 +161,6 @@ class SimRacingUI:
         elif self.current_screen == "b1_selection":
             for pos, _ in self.get_functions_b1_training().items():
                 if pos[0] < mouse_pos[0] < pos[0] + 1450 and pos[1] < mouse_pos[1] < pos[1] + 96:
-                    print("looking for UI")
                     return pos
         return None
 
@@ -156,6 +181,11 @@ class SimRacingUI:
     def close_screen(self):
         self.running = False
         pygame.display.quit()
+        if self.ready_for_start != "":
+            uebung = self.ready_for_start
+            self.ready_for_start = ""
+            self.draw_buttons()
+            self.os.lfs_interface.track_uebung(uebung)
 
     def run(self):
         while self.running:
@@ -167,6 +197,8 @@ class SimRacingUI:
             if self.current_screen == "wheel_prompt":
                 if self.os.check_wheel_connected():
                     self.running = False
+            if self.ready_for_start != "":
+                self.close_screen()
 
         pygame.quit()
 

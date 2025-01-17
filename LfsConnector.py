@@ -7,7 +7,8 @@ from VehicleModel import VehicleModel
 
 
 class LFSConnection:
-    def __init__(self, username, qnummer):
+    def __init__(self, username, qnummer, os):
+        self.os = os
         self.username = username
         self.qnummer = qnummer
         self.penalty = False
@@ -284,6 +285,8 @@ class LFSConnection:
             self.start_outsim()
 
         def start_menu_insim():
+            print("Menu")
+            self.os.lfs_interface.switched_to_menu = True
             self.time_menu_open = time.time()
             self.on_track = False
             insim.unbind(pyinsim.ISP_MCI, self.get_car_data)
