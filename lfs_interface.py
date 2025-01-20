@@ -76,7 +76,10 @@ class LFSInterface:
         self.lfs_connector.brake_speed_start = 0
         self.lfs_connector.speeds = []
         self.lfs_connector.drift_values = []
+        self.lfs_connector.braking_possible = False
         self.switched_to_menu = False
+        self.lfs_connector.failed_brake = False
+        self.lfs_connector.y_at_stop = -1
 
         def handle_button_clicks():
             """Check and handle button clicks, returning whether restart or quit was requested"""
@@ -153,7 +156,13 @@ class LFSInterface:
 
         def handle_emergency_brake():
             """Handle the emergency brake exercise (Notbremsung)"""
-            MIN_SPEED = 75 if uebung == "Notbremsung" else 65  # km/h
+            if uebung == "Notbremsung":
+                MIN_SPEED = 75
+            elif uebung == "Notbremsung_Ausweichen":
+                MIN_SPEED = 65
+            else:
+                MIN_SPEED = 115
+
             FAILURE_DISPLAY_TIME = 2  # seconds
 
             connector = self.lfs_connector
@@ -162,6 +171,8 @@ class LFSInterface:
             failed = None
 
             def check_speed():
+                print(connector.vehicle_model.speed)
+                print("MIN", MIN_SPEED)
                 if uebung == "Ausweichen":
                     self.lfs_connector.speeds.append(connector.vehicle_model.speed)
                 if connector.vehicle_model.speed < MIN_SPEED:
@@ -206,6 +217,99 @@ class LFSInterface:
                 if connector.crossed_checkpoint2 and not connector.came_to_standstill:
                     failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast nicht angehalten."
+                    self.os.UI.draw_info_button(reason)
+                    connector.crossed_checkpoint1 = False
+                    connector.crossed_checkpoint2 = False
+                    connector.came_to_standstill = False
+
+                if self.lfs_connector.penalty and failed is None:
+                    self.lfs_connector.penalty = False
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du hast eine Strafe erhalten."
+                    self.os.UI.draw_info_button(reason)
+
+                # Check exit conditions
+                if (connector.laps_done == 1 or
+                        (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME) or
+                        restart or quit):
+                    print(connector.laps_done)
+                    break
+
+            if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
+                cleanup_and_restart()
+            elif quit or connector.laps_done == 1:
+                cleanup_and_quit()
+
+        def handle_zielbremsung():
+            """Handle the zielbremsung exercise """
+            MIN_SPEED = 75
+            FAILURE_DISPLAY_TIME = 2  # seconds
+            connector = self.lfs_connector
+            checkpoint = 0
+            failed = None
+
+            def check_speed():
+                if connector.vehicle_model.speed < MIN_SPEED:
+                    return time.perf_counter(), "Du warst nicht schnell genug."
+                return None, ""
+
+            while True:
+                restart, quit = handle_button_clicks()
+
+                # Process checkpoints and speed checks
+                if len(connector.splittimes) == 1 and checkpoint == 0:
+                    checkpoint = 1
+                    failed, reason = check_speed()
+                    if failed is not None:
+                        self.os.UI.draw_info_button(reason)
+
+                if len(connector.splittimes) == 2 and checkpoint == 1:
+                    checkpoint += 1
+                    failed, reason = check_speed()
+                    if failed is not None:
+                        self.os.UI.draw_info_button(reason)
+
+                if len(connector.splittimes) == 3 and checkpoint == 2:
+                    checkpoint += 1
+                    failed, reason = check_speed()
+                    if failed is not None:
+                        self.os.UI.draw_info_button(reason)
+
+                # Check for collisions
+                if self.lfs_connector.hit_an_object and failed is None:
+                    self.lfs_connector.hit_an_object = False
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du hast eine Pylone getroffen."
+                    self.os.UI.draw_info_button(reason)
+
+                if connector.crossed_checkpoint2 and not connector.came_to_standstill:
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du hast nicht angehalten."
+                    self.os.UI.draw_info_button(reason)
+                    connector.crossed_checkpoint1 = False
+                    connector.crossed_checkpoint2 = False
+                    connector.came_to_standstill = False
+
+                if self.lfs_connector.came_to_standstill and self.lfs_connector.distance_to_goal > 8.5:
+                    print("DISTANCE,", self.lfs_connector.distance_to_goal)
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du stehst zu weit weg."
+                    self.os.UI.draw_info_button(reason)
+                    connector.crossed_checkpoint1 = False
+                    connector.crossed_checkpoint2 = False
+                    connector.came_to_standstill = False
+
+                if self.lfs_connector.came_to_standstill and self.lfs_connector.y_at_stop > 175*65536:
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du bist zu weit gefahren."
+                    self.os.UI.draw_info_button(reason)
+                    connector.crossed_checkpoint1 = False
+                    connector.crossed_checkpoint2 = False
+                    connector.came_to_standstill = False
+
+                if self.lfs_connector.came_to_standstill and not self.lfs_connector.full_brake_pedal:
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Das war keine Vollbremsung."
                     self.os.UI.draw_info_button(reason)
                     connector.crossed_checkpoint1 = False
                     connector.crossed_checkpoint2 = False
@@ -662,6 +766,16 @@ class LFSInterface:
                 cleanup_and_restart()
             elif quit:
                 cleanup_and_quit()
+        def handle_freies_ueben():
+            while True:
+                restart, quit = handle_button_clicks()
+                if restart or quit:
+                    break
+
+            if restart:
+                cleanup_and_restart()
+            elif quit:
+                cleanup_and_quit()
 
         # Map exercise names to their handler functions
         exercise_handlers = {
@@ -676,6 +790,9 @@ class LFSInterface:
             "PracticeBL1": handle_practice,
             "PracticeWE2": handle_practice,
             "Driften": handle_driften,
+            "freies_ueben": handle_freies_ueben,
+            "Zielbremsung": handle_zielbremsung,
+            "Schnelles_Ausweichen": handle_emergency_brake
         }
 
         # Run the appropriate exercise handler

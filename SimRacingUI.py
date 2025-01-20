@@ -7,7 +7,7 @@ import config
 import pyinsim
 from login_screen import login_window
 from race_type_functions import start_hotlap_blackwood, start_hotlap_westhill, start_practice_westhill, \
-    start_practice_blackwood, start_driften, start_b1_uebung
+    start_practice_blackwood, start_driften, start_b1_uebung, start_freies_ueben
 
 
 class SimRacingUI:
@@ -38,9 +38,11 @@ class SimRacingUI:
             self.draw_explanation()
         elif self.current_screen == "shutdown":
             self.draw_shutdown()
+
     def draw_shutdown(self):
         bg = pygame.image.load("data/images/shutdown.png")
         self.screen.blit(bg, (0, 0))
+
     def draw_b1_selection(self):
         bg = pygame.image.load("data/images/b1.png")
         self.screen.blit(bg, (0, 0))
@@ -102,6 +104,7 @@ class SimRacingUI:
             (339, 745): "start_practice_bl",
             (769, 745): "start_practice_we",
             (646, 425): "driften",
+            (1209, 1036): "freies_ueben",
             (1843, 44): "change_user",
             (644, 1138): "shutdown"
         }
@@ -114,9 +117,21 @@ class SimRacingUI:
             (286, 580): "Ausweichen",
             (355, 735): "untersteuern",
             (418, 900): "uebersteuern",
+            (243, 500): "Zielbremsung",
+            (482, 1000): "Schnelles_Ausweichen",
             (1691, 36): "back_to_menu"
 
+        }
 
+    def get_functions_b2_training(self):
+        return {
+            (86, 72): "Notbremsung_Kurve",
+            (145, 238): "Notspurwechsel",
+            (216, 410): "Halbkreis_drift",
+            (286, 580): "Ideal_Sicherheitslinie",
+            (355, 735): "Rennrunde_fahren",
+            (418, 900): "Notbremsung_200",
+            (1691, 36): "back_to_menu"
         }
 
     def check_button_function(self, position):
@@ -135,6 +150,8 @@ class SimRacingUI:
                 start_practice_westhill(self)
             elif functionality == "driften":
                 start_driften(self)
+            elif functionality == "freies_ueben":
+                start_freies_ueben(self)
             elif functionality == "change_user":
                 self.change_user()
             elif functionality == "shutdown":
@@ -152,6 +169,15 @@ class SimRacingUI:
                 thread = threading.Thread(target=start_b1_uebung, args=(self, functionality))
                 thread.start()
 
+        elif self.current_screen == "b2_selection":
+            functions = self.get_functions_b1_training()
+            functionality = functions.get(position)
+
+            if functionality == "back_to_menu":
+                self.current_screen = "main_menu"
+            else:
+                thread = threading.Thread(target=start_b1_uebung, args=(self, functionality))
+                thread.start()
 
     def find_buttons_ui(self, mouse_pos):
         if self.current_screen == "main_menu":
@@ -159,6 +185,10 @@ class SimRacingUI:
                 if pos[0] < mouse_pos[0] < pos[0] + 208 and pos[1] < mouse_pos[1] < pos[1] + 208:
                     return pos
         elif self.current_screen == "b1_selection":
+            for pos, _ in self.get_functions_b1_training().items():
+                if pos[0] < mouse_pos[0] < pos[0] + 1450 and pos[1] < mouse_pos[1] < pos[1] + 96:
+                    return pos
+        elif self.current_screen == "b2_selection":
             for pos, _ in self.get_functions_b1_training().items():
                 if pos[0] < mouse_pos[0] < pos[0] + 1450 and pos[1] < mouse_pos[1] < pos[1] + 96:
                     return pos

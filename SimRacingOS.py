@@ -6,6 +6,7 @@ from login_screen import login_window
 
 class SimRacingOS:
     def __init__(self):
+        print("NEW")
         self.user_name, self.qnummer = login_window()
         self.user_name = self.user_name.upper()
         self.qnummer = self.qnummer.upper()

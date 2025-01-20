@@ -102,7 +102,6 @@ def start_practice_westhill(ui_manager):
 
 
 def start_b1_uebung(ui_manager, uebung):
-
     ui_manager.current_explain = uebung
     ui_manager.current_screen = "explain"
     lfs_interface = ui_manager.os.lfs_interface
@@ -121,7 +120,7 @@ def start_b1_uebung(ui_manager, uebung):
     lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
     lfs_interface.send_commands_to_lfs([b"/join"])
-    if uebung in ["Lenkradhaltung", "Notbremsung", "Notbremsung_Ausweichen", "Ausweichen", "Schnelles_Ausweichen"]:
+    if uebung in ["Lenkradhaltung", "Notbremsung", "Notbremsung_Ausweichen", "Ausweichen", "Schnelles_Ausweichen", "Zielbremsung"]:
         lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830TC"])
     else:
         lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830"])
@@ -155,3 +154,27 @@ def start_driften(ui_manager):
     time.sleep(1)
     ui_manager.draw_buttons()
     ui_manager.os.lfs_interface.track_uebung("Driften")
+
+def start_freies_ueben(ui_manager):
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    lfs_interface = ui_manager.os.lfs_interface
+    lfs_interface.send_commands_to_lfs([b"/track LA1"])
+    time.sleep(3)
+    lfs_interface.send_commands_to_lfs([b"/weather 3"])
+    time.sleep(0.7)
+    lfs_interface.send_commands_to_lfs([b"/axload freies_ueben"])
+    time.sleep(1)
+    lfs_interface.send_commands_to_lfs([b"/spec"])
+    time.sleep(0.2)
+    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
+    time.sleep(0.4)
+    lfs_interface.send_commands_to_lfs([b"/join"])
+    lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830"])
+    time.sleep(0.2)
+    ui_manager.close_screen()
+    lfs_interface.send_commands_to_lfs([b"/ready"])
+    time.sleep(1)
+    ui_manager.draw_buttons()
+    ui_manager.os.lfs_interface.track_uebung("freies_ueben")

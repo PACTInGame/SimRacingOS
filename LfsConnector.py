@@ -40,7 +40,13 @@ class LFSConnection:
         self.speeds = []
         self.brake_distance_start = 0
         self.brake_speed_start = 0
+        self.full_brake_pedal = False
         self.drift_values = []
+        self.braking_possible = False
+        self.distance_to_goal = -1
+        self.y_at_stop = -1
+        self.failed_brake = False
+        self.display_hud = False
 
 
     def outgauge_packet(self, outgauge, packet):
@@ -283,6 +289,7 @@ class LFSConnection:
             insim.send(pyinsim.ISP_TINY, ReqI=255, SubT=pyinsim.TINY_NPL)
             self.start_outgauge()
             self.start_outsim()
+            self.display_hud = True
 
         def start_menu_insim():
             print("Menu")
@@ -290,6 +297,11 @@ class LFSConnection:
             self.time_menu_open = time.time()
             self.on_track = False
             insim.unbind(pyinsim.ISP_MCI, self.get_car_data)
+            self.display_hud = False
+            self.del_button(100)
+            self.del_button(101)
+            self.del_button(102)
+
 
         flags = [int(i) for i in str("{0:b}".format(sta.Flags))]
         self.in_game_cam = sta.InGameCam
@@ -326,14 +338,27 @@ class LFSConnection:
             cp = self.get_checkpoint(uco.Info.Flags)
             if cp == 0:
                 self.crossed_checkpoint1 = True
-                self.brake_distance_start = self.vehicle_model.position_mci
+                if not self.uebung == "Zielbremsung":
+                    self.brake_distance_start = self.vehicle_model.position_mci
+                else:
+                    self.braking_possible = True
                 self.brake_speed_start = self.vehicle_model.speed
             elif cp == 1:
+                print("CP1U")
+                print(self.came_to_standstill)
+                self.braking_possible = False
                 self.crossed_checkpoint2 = True
+                self.distance_to_goal = -1
+                self.failed_brake = False
             elif cp == 2:
                 self.crossed_checkpoint1 = False
                 self.crossed_checkpoint2 = False
                 self.came_to_standstill = False
+                self.full_brake_pedal = False
+                self.y_at_stop = -1
+
+
+
 
     def run(self):
         self.insim = pyinsim.insim(b'127.0.0.1', 29999, Admin=b'', Prefix=b"$",

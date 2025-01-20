@@ -93,13 +93,15 @@ class VehicleModel:
         # Calculate distance increment: speed * time
         self.speed = packet.Speed * 3.6  # Convert to km/h
         if self.speed < 1 and self.connector.crossed_checkpoint1 and not self.connector.came_to_standstill:
+
+            print(self.position_mci, self.connector.brake_distance_start)
+            self.connector.distance_to_goal = pyinsim.length(pyinsim.dist(self.position_mci, (-222.1*65536.0, 176.7*65536.0, 8.25*65536.0)))
+            self.connector.y_at_stop = self.position_mci[1]
             self.connector.came_to_standstill = True
-            self.connector.brake_distances.append([pyinsim.length(pyinsim.dist(self.position_mci,
-                                                                               self.connector.brake_distance_start)),
+            self.connector.brake_distances.append([pyinsim.length(pyinsim.dist(self.position_mci, self.connector.brake_distance_start)),
                                                    self.connector.brake_speed_start])
             self.connector.brake_distance_start = 0
             self.connector.brake_speed_start = 0
-            print("Brake distance: ", self.connector.brake_distances)
 
         self.dynamic = self.speed - self.previous_speed
         self.rpm = packet.RPM
@@ -107,6 +109,37 @@ class VehicleModel:
         self.gear = packet.Gear
         self.throttle = packet.Throttle
         self.brake = packet.Brake
+
+        if self.connector.braking_possible and self.brake > 0.95 and (self.connector.brake_distance_start == (0,0,0) or self.connector.brake_distance_start == 0) and not self.connector.failed_brake:
+            self.connector.brake_distance_start = self.connector.vehicle_model.position_mci
+            self.connector.full_brake_pedal = True
+        else:
+            if self.connector.brake_distance_start == 0:
+                self.connector.brake_distance_start = (0,0,0)
+
+        if self.connector.brake_distance_start != 0 and self.connector.brake_distance_start != (0,0,0):
+            distance_since_brake_start = pyinsim.length(pyinsim.dist(self.position_mci,
+                                            self.connector.brake_distance_start))
+            if self.brake < 0.9 and distance_since_brake_start > 3 and not self.connector.came_to_standstill and self.speed_mci > 3:
+                self.connector.full_brake_pedal = False
+                self.connector.failed_brake = True
+
+
+        if self.connector.display_hud:
+            self.connector.send_button(
+            100, pyinsim.ISB_LIGHT , 132, 87, 15, 8, f"{round(self.speed)} km/h")
+            self.connector.send_button(
+                101, pyinsim.ISB_LIGHT, 135, 102, 10, 5, f"{round(self.rpm/1000, 1)} rpm")
+            if self.gear == 0:
+                gear = "R"
+            elif self.gear == 1:
+                gear = "N"
+            else:
+                gear = self.gear - 1
+            self.connector.send_button(
+                102, pyinsim.ISB_LIGHT, 132, 102, 5, 3, f"{gear}")
+
+
         self.clutch = packet.Clutch
         self.turbo = packet.Turbo
         self.engine_temp = packet.EngTemp
