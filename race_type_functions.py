@@ -102,8 +102,6 @@ def start_practice_westhill(ui_manager):
 
 
 def start_b1_uebung(ui_manager, uebung):
-    ui_manager.current_explain = uebung
-    ui_manager.current_screen = "explain"
     lfs_interface = ui_manager.os.lfs_interface
     lfs_interface.send_commands_to_lfs([b"/track BL4"])
     time.sleep(1)
@@ -124,8 +122,6 @@ def start_b1_uebung(ui_manager, uebung):
         lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830TC"])
     else:
         lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830"])
-    ui_manager.current_explain = f"{uebung}-enter"
-    keyboard.wait("enter")
     time.sleep(0.2)
     lfs_interface.send_commands_to_lfs([b"/ready"])
     ui_manager.ready_for_start = uebung

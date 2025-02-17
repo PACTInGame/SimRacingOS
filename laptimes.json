@@ -353,6 +353,11 @@
                 "laptime": 3400.170700000672,
                 "longest_distance": 51.2525856461341,
                 "highest_angle": 40.25488903537684
+            },
+            {
+                "laptime": 3717.8083000000015,
+                "longest_distance": 63.42991567399747,
+                "highest_angle": 55.58668424522083
             }
         ],
         "Driften": [
@@ -708,6 +713,11 @@
                 "laptime": 3905.244699999912,
                 "longest_distance": 44.61149846226693,
                 "highest_angle": 69.84179301252472
+            },
+            {
+                "laptime": 2943.5829999999896,
+                "longest_distance": 70.66298421958183,
+                "highest_angle": 48.9892331355746
             }
         ],
         "Driften": [
@@ -1020,6 +1030,105 @@
                     54330,
                     82680
                 ]
+            }
+        ]
+    },
+    "('ROBERT', 'Q645645')": {
+        "Driften": [
+            {
+                "laptime": 28100,
+                "splittimes": [
+                    12010,
+                    16960,
+                    24440
+                ],
+                "longest_time": 4.854871199999991,
+                "longest_distance": 90.94827070827823,
+                "highest_angle": 52.98835420786641,
+                "total_dist": 313.0150125487048
+            }
+        ]
+    },
+    "('R', 'Q545645')": {
+        "Practice Westhill": [
+            {
+                "laptime": 159770,
+                "splittimes": [
+                    45070,
+                    95350
+                ]
+            },
+            {
+                "laptime": 147060,
+                "splittimes": [
+                    1,
+                    82230
+                ]
+            }
+        ],
+        "Hotlap Westhill": [
+            {
+                "laptime": 137860,
+                "splittimes": [
+                    32020,
+                    78290
+                ]
+            }
+        ]
+    },
+    "('R', 'Q521969')": {
+        "\u00dcbersteuern": [
+            {
+                "laptime": 1853.4889000002295,
+                "longest_distance": 23.311154496728218,
+                "highest_angle": 40.22742254449572
+            },
+            {
+                "laptime": 2999.373700000433,
+                "longest_distance": 32.225352845001204,
+                "highest_angle": 72.39617666446935
+            },
+            {
+                "laptime": 2448.0924999998024,
+                "longest_distance": 30.65286924139129,
+                "highest_angle": 58.794770380136235
+            },
+            {
+                "laptime": 2742.4962999994023,
+                "longest_distance": 33.55194592068934,
+                "highest_angle": 71.1327180839376
+            }
+        ]
+    },
+    "('TOBIAS', 'Q606674')": {
+        "Hotlap Blackwood": [
+            {
+                "laptime": 92150,
+                "splittimes": [
+                    30930,
+                    65870
+                ]
+            },
+            {
+                "laptime": 88570,
+                "splittimes": [
+                    1,
+                    62810
+                ]
+            }
+        ]
+    },
+    "('ROBERT', 'Q545445')": {
+        "\u00dcbersteuern": [
+            {
+                "laptime": 2045.114299999966,
+                "longest_distance": 25.393634226620957,
+                "highest_angle": 49.511096462315976
+            },
+            {
+                "laptime": 1581.7737999999508,
+                "longest_distance": 25.621590891503008,
+                "highest_angle": 33.37178642056691
             }
         ]
     }
