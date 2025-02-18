@@ -792,6 +792,42 @@ class LFSInterface:
             elif quit:
                 cleanup_and_quit()
 
+        def handle_instructor_b2():
+            """Handle practice exercises (PracticeBL1 and PracticeWE2)"""
+            connector = self.lfs_connector
+            connector.laps_done = 0
+            failed = None
+            FAILURE_DISPLAY_TIME = 3
+            ai_strength = 5
+
+            while True:
+                restart, quit = handle_button_clicks()
+                if restart or quit:
+                    print("restart or quit")
+                    break
+                # TODO AI Change when new lap
+
+                if self.lfs_connector.penalty and failed is None:
+                    self.lfs_connector.penalty = False
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du bist nicht Idealline gefahren."
+                    self.os.UI.draw_info_button(reason)
+                if connector.laps_done != ai_strength - 1:
+                    command = f"/aiset_all {connector.laps_done + 1}"
+                    command = command.encode()
+                    self.send_commands_to_lfs([command])
+
+                if (connector.laps_done == 5 or
+                        (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME) or
+                        restart or quit):
+                    break
+
+            if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
+                cleanup_and_restart()
+            elif quit or connector.laps_done == 1:
+                cleanup_and_quit()
+
+
         def handle_emergency_brake_b2():
             """Handle the emergency brake exercise (Notbremsung)"""
             MIN_SPEED = 110

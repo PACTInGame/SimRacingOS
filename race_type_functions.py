@@ -86,6 +86,7 @@ def start_practice_blackwood(ui_manager):
     lfs_interface.send_commands_to_lfs([b"/ready"])
     time.sleep(1)
     ui_manager.draw_buttons()
+    lfs_interface.send_commands_to_lfs([b"/press 4"])
     ui_manager.os.lfs_interface.track_uebung("PracticeBL1")
 
 
@@ -164,11 +165,15 @@ def start_practice_westhill(ui_manager):
     pygame.display.update()
     lfs_interface.send_commands_to_lfs([b"/car FZ5", b"/join"])
     lfs_interface.send_commands_to_lfs([b"/setup WE2R_Q_Final_TC"])
+    time.sleep(0.1)
+    lfs_interface.send_commands_to_lfs([b"/laps 3"])
+    time.sleep(0.2)
     time.sleep(0.2)
     ui_manager.close_screen()
     lfs_interface.send_commands_to_lfs([b"/ready"])
     time.sleep(1)
     ui_manager.draw_buttons()
+    lfs_interface.send_commands_to_lfs([b"/press 4"])
     ui_manager.os.lfs_interface.track_uebung("PracticeWE2")
 
 
