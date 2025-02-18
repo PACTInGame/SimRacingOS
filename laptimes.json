@@ -718,6 +718,16 @@
                 "laptime": 2943.5829999999896,
                 "longest_distance": 70.66298421958183,
                 "highest_angle": 48.9892331355746
+            },
+            {
+                "laptime": 2343.239400000016,
+                "longest_distance": 34.643645696447784,
+                "highest_angle": 46.841353548670625
+            },
+            {
+                "laptime": 2689.0197999999828,
+                "longest_distance": 32.491385871237746,
+                "highest_angle": 84.42100637222589
             }
         ],
         "Driften": [
@@ -891,6 +901,51 @@
                     85.93312911987304,
                     85.98334350585938,
                     86.85217666625977
+                ]
+            },
+            {
+                "laptime": 65840,
+                "splittimes": [
+                    7280,
+                    32160,
+                    56740
+                ],
+                "brake_distances": [
+                    21.74176260949242,
+                    29.076870866474803,
+                    30.188558844080863
+                ],
+                "speeds": [
+                    78.5458740234375,
+                    89.56204376220704,
+                    91.49836349487305
+                ]
+            },
+            {
+                "laptime": 99210,
+                "splittimes": [
+                    10860,
+                    58760,
+                    87610
+                ],
+                "brake_distances": [
+                    22.29635204418857,
+                    20.857146126211163,
+                    26.053022222376896
+                ],
+                "speeds": [
+                    70.00658569335938,
+                    75.61245574951172,
+                    84.7000099182129
+                ]
+            }
+        ],
+        "Practice Blackwood": [
+            {
+                "laptime": 107090,
+                "splittimes": [
+                    1,
+                    74000
                 ]
             }
         ]
@@ -1129,6 +1184,87 @@
                 "laptime": 1581.7737999999508,
                 "longest_distance": 25.621590891503008,
                 "highest_angle": 33.37178642056691
+            }
+        ]
+    },
+    "('3', 'Q556456')": {
+        "Practice Blackwood": [
+            {
+                "laptime": 99170,
+                "splittimes": [
+                    41750,
+                    74510
+                ]
+            },
+            {
+                "laptime": 89310,
+                "splittimes": [
+                    1,
+                    63890
+                ]
+            },
+            {
+                "laptime": 88960,
+                "splittimes": [
+                    1,
+                    63390
+                ]
+            },
+            {
+                "laptime": 89640,
+                "splittimes": [
+                    1,
+                    63650
+                ]
+            }
+        ],
+        "Driften": [
+            {
+                "laptime": 28480,
+                "splittimes": [
+                    12050,
+                    17250,
+                    24630
+                ],
+                "longest_time": 4.408348499999192,
+                "longest_distance": 96.71169144378699,
+                "highest_angle": 47.48406943528895,
+                "total_dist": 306.87898508060334
+            }
+        ],
+        "Hotlap Blackwood": [
+            {
+                "laptime": 90910,
+                "splittimes": [
+                    28960,
+                    64500
+                ]
+            }
+        ]
+    },
+    "('5', 'Q555555')": {
+        "WE3XNotbremsung_Kurve": [
+            {
+                "laptime": 18410,
+                "splittimes": [
+                    9560
+                ]
+            }
+        ],
+        "WE3XDoppelspurwechsel": [
+            {
+                "laptime": 26010,
+                "splittimes": [
+                    8770
+                ]
+            }
+        ],
+        "WE3XNotbremsung_220": [
+            {
+                "laptime": 31890,
+                "splittimes": [
+                    19120
+                ]
             }
         ]
     }

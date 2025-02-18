@@ -8,7 +8,7 @@ import config
 import pyinsim
 from login_screen import login_window
 from race_type_functions import start_hotlap_blackwood, start_hotlap_westhill, start_practice_westhill, \
-    start_practice_blackwood, start_driften, start_b1_uebung, start_freies_ueben
+    start_practice_blackwood, start_driften, start_b1_uebung, start_freies_ueben, start_b2_uebung
 
 
 class SimRacingUI:
@@ -27,7 +27,7 @@ class SimRacingUI:
         self.listener_thread = None
         self.current_explain = ""
         self.ready_for_start = ""
-
+        self.starting_count = 0
 
     def draw(self):
         if self.current_screen == "main_menu":
@@ -36,7 +36,9 @@ class SimRacingUI:
             self.draw_wheel_prompt()
         elif self.current_screen == "b1_selection":
             self.draw_b1_selection()
-        elif self.current_screen == "explain":
+        elif self.current_screen == "b2_selection":
+            self.draw_b2_selection()
+        elif self.current_screen == "explain_b1" or self.current_screen == "explain_b2":
             self.draw_explanation()
         elif self.current_screen == "shutdown":
             self.draw_shutdown()
@@ -51,6 +53,10 @@ class SimRacingUI:
         bg = pygame.image.load("data/images/b1_list.png")
         self.screen.blit(bg, (0, 0))
 
+    def draw_b2_selection(self):
+        bg = pygame.image.load("data/images/b2_list.png")
+        self.screen.blit(bg, (0, 0))
+
     def draw_wheel_prompt(self):
         bg = pygame.image.load("data/images/Lenkrad.png")
         self.screen.blit(bg, (0, 0))
@@ -60,7 +66,19 @@ class SimRacingUI:
         self.screen.blit(bg, (0, 0))
 
     def draw_starting(self):
-        bg = pygame.image.load(f"data/images/starting.png")
+        if self.starting_count == 0:
+            bg = pygame.image.load(f"data/images/starting.png")
+        elif self.starting_count == 1:
+            bg = pygame.image.load(f"data/images/loading1.png")
+        elif self.starting_count == 2:
+            bg = pygame.image.load(f"data/images/loading2.png")
+        elif self.starting_count == 3:
+            bg = pygame.image.load(f"data/images/loading3.png")
+        elif self.starting_count == 4:
+            bg = pygame.image.load(f"data/images/loading4.png")
+        elif self.starting_count == 5:
+            bg = pygame.image.load(f"data/images/loading5.png")
+
         self.screen.blit(bg, (0, 0))
 
     def draw_main_menu(self):
@@ -131,13 +149,13 @@ class SimRacingUI:
 
     def get_functions_b2_training(self):
         return {
-            (86, 72): "Notbremsung_Kurve",
-            (145, 238): "Notspurwechsel",
-            (216, 410): "Halbkreis_drift",
-            (286, 580): "Ideal_Sicherheitslinie",
-            (355, 735): "Rennrunde_fahren",
-            (418, 900): "Notbremsung_200",
-            (1691, 36): "back_to_menu"
+            (194, 155): "Notbremsung_Kurve",
+            (194, 305): "Doppelspurwechsel",
+            (194, 460): "Halbkreis_drift",
+            (194, 613): "Ideal_Sicherheitslinie",
+            (194, 765): "Rennrunde_fahren",
+            (194, 915): "Notbremsung_220",
+            (40, 26): "back_to_menu"
         }
 
     def check_button_function(self, position):
@@ -148,18 +166,40 @@ class SimRacingUI:
             functions = self.get_functions_main_menu()
             functionality = functions.get(position)
             if functionality == "start_hotlap_bl":
+                self.starting_count = 0
+                self.current_screen = "starting"
+                self.draw_starting()
                 start_hotlap_blackwood(self)
             elif functionality == "b1_training":
                 self.current_screen = "b1_selection"
+
+            elif functionality == "b2_training":
+                self.current_screen = "b2_selection"
+
             elif functionality == "start_hotlap_we":
+                self.starting_count = 0
+                self.current_screen = "starting"
+                self.draw_starting()
                 start_hotlap_westhill(self)
             elif functionality == "start_practice_bl":
+                self.starting_count = 0
+                self.current_screen = "starting"
+                self.draw_starting()
                 start_practice_blackwood(self)
             elif functionality == "start_practice_we":
+                self.starting_count = 0
+                self.current_screen = "starting"
+                self.draw_starting()
                 start_practice_westhill(self)
             elif functionality == "driften":
+                self.starting_count = 0
+                self.current_screen = "starting"
+                self.draw_starting()
                 start_driften(self)
             elif functionality == "freies_ueben":
+                self.starting_count = 0
+                self.current_screen = "starting"
+                self.draw_starting()
                 start_freies_ueben(self)
             elif functionality == "change_user":
                 self.change_user()
@@ -168,37 +208,37 @@ class SimRacingUI:
                 os.system("shutdown /s /f /t 20")
 
 
-        elif self.current_screen == "b1_selection" or self.current_screen == "explain":
+        elif self.current_screen == "b1_selection" or self.current_screen == "explain_b1":
             functions = self.get_functions_b1_training()
             functionality = functions.get(position)
             self.current_explain = functionality
-            self.current_screen = "explain"
+            self.current_screen = "explain_b1"
             if functionality == "back_to_menu":
                 self.current_screen = "main_menu"
 
 
-        elif self.current_screen == "b2_selection":
-            functions = self.get_functions_b1_training()
+
+        elif self.current_screen == "b2_selection" or self.current_screen == "explain_b2":
+            functions = self.get_functions_b2_training()
             functionality = functions.get(position)
-
+            self.current_explain = functionality
+            self.current_screen = "explain_b2"
             if functionality == "back_to_menu":
                 self.current_screen = "main_menu"
-            else:
-                thread = threading.Thread(target=start_b1_uebung, args=(self, functionality))
-                thread.start()
+
 
     def find_buttons_ui(self, mouse_pos):
         if self.current_screen == "main_menu":
             for pos, _ in self.get_functions_main_menu().items():
                 if pos[0] < mouse_pos[0] < pos[0] + 574 and pos[1] < mouse_pos[1] < pos[1] + 68:
                     return pos
-        elif self.current_screen == "b1_selection" or self.current_screen == "explain":
+        elif self.current_screen == "b1_selection" or self.current_screen == "explain_b1":
             for pos, _ in self.get_functions_b1_training().items():
-                if pos[0] < mouse_pos[0] < pos[0] + 1450 and pos[1] < mouse_pos[1] < pos[1] + 96:
+                if pos[0] < mouse_pos[0] < pos[0] + 2261 and pos[1] < mouse_pos[1] < pos[1] + 115:
                     return pos
-        elif self.current_screen == "b2_selection":
+        elif self.current_screen == "b2_selection" or self.current_screen == "explain_b2":
             for pos, _ in self.get_functions_b1_training().items():
-                if pos[0] < mouse_pos[0] < pos[0] + 1450 and pos[1] < mouse_pos[1] < pos[1] + 96:
+                if pos[0] < mouse_pos[0] < pos[0] + 2261 and pos[1] < mouse_pos[1] < pos[1] + 115:
                     return pos
         return None
 
@@ -235,11 +275,16 @@ class SimRacingUI:
             if self.current_screen == "wheel_prompt":
                 if self.os.check_wheel_connected():
                     self.running = False
-            elif self.current_screen == "explain":
+            elif self.current_screen == "explain_b1" or self.current_screen == "explain_b2":
                 if keyboard.is_pressed("enter"):
                     self.current_screen = "starting"
-                    thread = threading.Thread(target=start_b1_uebung, args=(self, self.current_explain))
-                    thread.start()
+                    self.starting_count = 0
+                    if self.current_explain not in ["Notbremsung_Kurve", "Doppelspurwechsel", "Halbkreis_drift", "Ideal_Sicherheitslinie", "Rennrunde_fahren", "Notbremsung_220"]:
+                        thread = threading.Thread(target=start_b1_uebung, args=(self, self.current_explain))
+                        thread.start()
+                    else:
+                        thread = threading.Thread(target=start_b2_uebung, args=(self, self.current_explain))
+                        thread.start()
             if self.ready_for_start != "":
                 self.close_screen()
 
