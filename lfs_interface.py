@@ -805,19 +805,22 @@ class LFSInterface:
                 if restart or quit:
                     print("restart or quit")
                     break
-                # TODO AI Change when new lap
 
                 if self.lfs_connector.penalty and failed is None:
                     self.lfs_connector.penalty = False
                     failed = time.perf_counter() if failed is None else failed
                     reason = "Du bist nicht Idealline gefahren."
                     self.os.UI.draw_info_button(reason)
-                if connector.laps_done != ai_strength - 1:
-                    command = f"/aiset_all {connector.laps_done + 1}"
+                if connector.laps_done != ai_strength - 3 and not connector.laps_done == 3: # TODO change for practice
+                    setting = connector.laps_done + 3
+                    if setting > 5:
+                        setting = 5
+                    command = f"/aiset_all {setting}"
                     command = command.encode()
                     self.send_commands_to_lfs([command])
+                    ai_strength = setting
 
-                if (connector.laps_done == 5 or
+                if (connector.laps_done == 4 or
                         (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME) or
                         restart or quit):
                     break
@@ -910,7 +913,7 @@ class LFSInterface:
             "Doppelspurwechsel": handle_emergency_brake_b2,
             "Halbkreis_drift": handle_oversteer,
             "Ideal_Sicherheitslinie": handle_oversteer,
-            "Rennrunde_fahren": handle_practice,
+            "Rennrunde_fahren": handle_instructor_b2,
             "Notbremsung_220": handle_emergency_brake_b2
         }
 
@@ -935,6 +938,8 @@ class LFSInterface:
     def send_commands_to_lfs(self, commands):
         for command in commands:
             self.lfs_connector.send_message(command)
+            if command == b"/spec" or command == b"/shift x":
+                self.lfs_connector.send_message(b"/spec AI 1")
 
     def update(self):
         pass

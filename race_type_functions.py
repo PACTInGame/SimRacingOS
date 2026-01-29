@@ -228,7 +228,10 @@ def start_b2_uebung(ui_manager, uebung):
     pygame.display.flip()
     pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
-    lfs_interface.send_commands_to_lfs([b"/track WE3X"])
+    if uebung != "Rennrunde_fahren":
+        lfs_interface.send_commands_to_lfs([b"/track WE3X"])
+    else:
+        lfs_interface.send_commands_to_lfs([b"/track WE2"])
     time.sleep(1)
     time.sleep(1)
     ui_manager.starting_count = 2
@@ -258,6 +261,12 @@ def start_b2_uebung(ui_manager, uebung):
     time.sleep(0.2)
     lfs_interface.send_commands_to_lfs([b"/car FZ5"])
     time.sleep(0.4)
+    if uebung == "Rennrunde_fahren":
+        lfs_interface.send_commands_to_lfs([b"/ai"])
+        time.sleep(0.3)
+        lfs_interface.send_commands_to_lfs([b"/laps 4"])
+
+
     lfs_interface.send_commands_to_lfs([b"/join"])
     if uebung not in ["Halbkreis_drift"]:
         lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830TC"])
