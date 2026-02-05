@@ -1576,12 +1576,15 @@ class IS_OBH(object):
 
 
 class IS_HLV(object):
-    pack_s = struct.Struct('6BH4B2h')
+    # Old: '6BH4B2h'
+    # New: Size(B) Type(B) ReqI(B) PLID(B) HLVC(B) Sp1(B) SpW(H) Time(I) + CarContOBJ fields
+    pack_s = struct.Struct('6BHI4B2h')  # Added SpW(H), Time changed from H to I
 
     def unpack(self, data):
         self.C = CarContOBJ()
-        self.Size, self.Type, self.ReqI, self.PLID, self.HLVC, self.Sp1, self.Time, self.C.Direction, self.C.Heading, self.C.Speed, self.C.Zbyte, self.C.X, self.C.Y = self.pack_s.unpack(
-            data)
+        self.Size, self.Type, self.ReqI, self.PLID, self.HLVC, self.Sp1, self.SpW, self.Time, \
+        self.C.Direction, self.C.Heading, self.C.Speed, self.C.Zbyte, \
+        self.C.X, self.C.Y = self.pack_s.unpack(data)
         return self
 
 

@@ -8,7 +8,7 @@ import config
 import pyinsim
 from login_screen import login_window
 from race_type_functions import start_hotlap_blackwood, start_hotlap_westhill, start_practice_westhill, \
-    start_practice_blackwood, start_driften, start_b1_uebung, start_freies_ueben, start_b2_uebung
+    start_practice_blackwood, start_driften, start_b1_uebung, start_freies_ueben, start_b2_uebung, start_abs_uebung
 
 
 class SimRacingUI:
@@ -125,6 +125,7 @@ class SimRacingUI:
             (1574, 586): "b1_training",
             (1574, 1115): "b2_training",
             (2307, 586): "driften",
+            (2307, 1115): "ABS_NoABS",
             (4438, 586): "freies_ueben",
             (136, 1115): "start_practice_bl",
             (845, 1115): "start_practice_we",
@@ -202,6 +203,13 @@ class SimRacingUI:
                 self.current_screen = "starting"
                 self.draw_starting()
                 start_freies_ueben(self)
+
+            elif functionality == "ABS_NoABS":
+                self.starting_count = 0
+                self.current_screen = "starting"
+                self.draw_starting()
+                start_abs_uebung(self)
+
             elif functionality == "change_user":
                 self.change_user()
             elif functionality == "shutdown":

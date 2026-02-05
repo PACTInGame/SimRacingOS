@@ -17,6 +17,8 @@ class LFSInterface:
         self.lfs_connector = LFSConnection(self.os.user_name, self.os.qnummer, self.os)
         pyautogui.FAILSAFE = False
         self.switched_to_menu = False
+        self.abs_run = True
+
 
     def start_lfs(self):
         self.lfs_process = subprocess.Popen(config.LFS_PATH, cwd=os.path.dirname(config.LFS_PATH))
@@ -80,6 +82,7 @@ class LFSInterface:
         self.switched_to_menu = False
         self.lfs_connector.failed_brake = False
         self.lfs_connector.y_at_stop = -1
+
 
         def handle_button_clicks():
             """Check and handle button clicks, returning whether restart or quit was requested"""
@@ -149,6 +152,8 @@ class LFSInterface:
                         (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME) or
                         restart or quit):
                     break
+                time.sleep(0.1)
+
             if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                 cleanup_and_restart()
             elif quit or self.lfs_connector.laps_done == 1:
@@ -234,6 +239,7 @@ class LFSInterface:
                         restart or quit):
                     print(connector.laps_done)
                     break
+                time.sleep(0.1)
 
             if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                 cleanup_and_restart()
@@ -327,6 +333,7 @@ class LFSInterface:
                         restart or quit):
                     print(connector.laps_done)
                     break
+                time.sleep(0.1)
 
             if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                 cleanup_and_restart()
@@ -392,6 +399,7 @@ class LFSInterface:
                         restart or quit):
                     print(connector.laps_done)
                     break
+                time.sleep(0.1)
 
             if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                 cleanup_and_restart()
@@ -640,6 +648,7 @@ class LFSInterface:
                     break
                 if restart or quit or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                     break
+                time.sleep(0.1)
 
             if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                 cleanup_and_restart()
@@ -767,6 +776,7 @@ class LFSInterface:
                     break
                 if restart or quit or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                     break
+                time.sleep(0.1)
 
             if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                 cleanup_and_restart()
@@ -778,6 +788,7 @@ class LFSInterface:
                 restart, quit = handle_button_clicks()
                 if restart or quit:
                     break
+                time.sleep(0.1)
 
             if restart:
                 cleanup_and_restart()
@@ -785,15 +796,33 @@ class LFSInterface:
                 cleanup_and_quit()
 
         def handle_ideal_sicherheitslinie():
-            # TODO
+            connector = self.lfs_connector
+            connector.laps_done = 0
+            failed = None
+            FAILURE_DISPLAY_TIME = 3
+
             while True:
                 restart, quit = handle_button_clicks()
                 if restart or quit:
+                    print("restart or quit")
                     break
 
-            if restart:
+                if self.lfs_connector.penalty and failed is None:
+                    self.lfs_connector.penalty = False
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du bist nicht Sicherheitslinie gefahren."
+                    self.os.UI.draw_info_button(reason)
+
+
+                if (connector.laps_done == 2 or
+                        (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME) or
+                        restart or quit):
+                    break
+                time.sleep(0.1)
+
+            if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                 cleanup_and_restart()
-            elif quit:
+            elif quit or connector.laps_done == 2:
                 cleanup_and_quit()
 
         def handle_instructor_b2():
@@ -815,8 +844,8 @@ class LFSInterface:
                     failed = time.perf_counter() if failed is None else failed
                     reason = "Du bist nicht Idealline gefahren."
                     self.os.UI.draw_info_button(reason)
-                if connector.laps_done != ai_strength - 3 and not connector.laps_done == 3: # TODO change for practice
-                    setting = connector.laps_done + 3
+                if connector.laps_done + 2 != ai_strength:
+                    setting = connector.laps_done + 2
                     if setting > 5:
                         setting = 5
                     command = f"/aiset_all {setting}"
@@ -828,10 +857,11 @@ class LFSInterface:
                         (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME) or
                         restart or quit):
                     break
+                time.sleep(0.1)
 
             if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                 cleanup_and_restart()
-            elif quit or connector.laps_done == 1:
+            elif quit or connector.laps_done == 4:
                 cleanup_and_quit()
 
 
@@ -842,7 +872,8 @@ class LFSInterface:
                 MIN_SPEED = 88
             if uebung == "Notbremsung_220":
                 MIN_SPEED = 216
-
+            if uebung == "ABS_NoABS":
+                MIN_SPEED = 155
             FAILURE_DISPLAY_TIME = 2  # seconds
 
             connector = self.lfs_connector
@@ -891,11 +922,102 @@ class LFSInterface:
                         (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME) or
                         restart or quit):
                     break
+                time.sleep(0.1)
 
             if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
                 cleanup_and_restart()
             elif quit or connector.laps_done == 1:
                 cleanup_and_quit()
+
+        def handle_abs_no_abs():
+            """Handle the emergency brake exercise (Notbremsung)"""
+            MIN_SPEED = 155
+
+            FAILURE_DISPLAY_TIME = 2  # seconds
+
+            connector = self.lfs_connector
+
+            checkpoint = 0
+            failed = None
+
+            def check_speed():
+                if connector.vehicle_model.speed < MIN_SPEED:
+                    return time.perf_counter(), "Du warst nicht schnell genug."
+                return None, ""
+
+            self.os.UI.draw_info_button("Fahre 160 an der Linie.")
+            info = time.perf_counter()
+            while True:
+                restart, quit = handle_button_clicks()
+                if info != 0 and info < time.perf_counter() - 3:
+                    self.os.UI.draw_info_button("Bremse dann in die Kurve.")
+                if info != 0 and info < time.perf_counter() - 6:
+                    info = 0
+                    self.os.UI.del_info_button()
+                # Process checkpoints and speed checks
+                if len(connector.splittimes) == 1 and checkpoint == 0:
+                    checkpoint = 1
+                    failed, reason = check_speed()
+                    if failed is not None:
+                        self.os.UI.draw_info_button(reason)
+
+                # Check for collisions
+                if self.lfs_connector.hit_an_object and failed is None:
+                    self.lfs_connector.hit_an_object = False
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du hast eine Pylone getroffen."
+                    self.os.UI.draw_info_button(reason)
+
+                if connector.crossed_checkpoint2 and not connector.came_to_standstill:
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du hast nicht angehalten."
+                    self.os.UI.draw_info_button(reason)
+                    connector.crossed_checkpoint1 = False
+                    connector.crossed_checkpoint2 = False
+                    connector.came_to_standstill = False
+
+                if self.lfs_connector.penalty and failed is None:
+                    self.lfs_connector.penalty = False
+                    failed = time.perf_counter() if failed is None else failed
+                    reason = "Du hast eine Strafe erhalten."
+                    self.os.UI.draw_info_button(reason)
+
+                if connector.laps_done == 1 and self.abs_run:
+                    print("Changing run")
+                    self.abs_run = False
+                    lfs_interface = self.os.lfs_interface
+                    lfs_interface.send_commands_to_lfs([b"/spec"])
+                    time.sleep(0.02)
+                    lfs_interface.send_commands_to_lfs([b"/setup Road_NoAbs"])
+                    time.sleep(0.02)
+                    lfs_interface.send_commands_to_lfs([b"/join"])
+
+                    break
+
+
+                elif connector.laps_done == 1 and not self.abs_run:
+                    print("Stop run")
+                    quit = True
+                    break
+
+                print(connector.laps_done)
+                # Check exit conditions
+                if ((failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME) or
+                        restart or quit):
+                    print("rst run")
+                    break
+
+                time.sleep(0.1)
+
+            if restart or (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME):
+                cleanup_and_restart()
+            elif quit:
+                self.abs_run = True
+                cleanup_and_quit()
+            elif connector.laps_done == 1 and not self.abs_run:
+                cleanup_and_restart()
+
+
 
         # Map exercise names to their handler functions
         exercise_handlers = {
@@ -916,9 +1038,10 @@ class LFSInterface:
             "Notbremsung_Kurve": handle_emergency_brake_b2,
             "Doppelspurwechsel": handle_emergency_brake_b2,
             "Halbkreis_drift": handle_oversteer,
-            "Ideal_Sicherheitslinie": handle_oversteer,
+            "Ideal_Sicherheitslinie": handle_ideal_sicherheitslinie,
             "Rennrunde_fahren": handle_instructor_b2,
-            "Notbremsung_220": handle_emergency_brake_b2
+            "Notbremsung_220": handle_emergency_brake_b2,
+            "ABS_NoABS": handle_abs_no_abs
         }
 
         # Run the appropriate exercise handler
@@ -942,7 +1065,7 @@ class LFSInterface:
     def send_commands_to_lfs(self, commands):
         for command in commands:
             self.lfs_connector.send_message(command)
-            if command == b"/spec" or command == b"/shift x":
+            if (command == b"/spec" or command == b"/shift x") and self.abs_run:
                 self.lfs_connector.send_message(b"/spec AI 1")
 
     def update(self):

@@ -228,7 +228,9 @@ def start_b2_uebung(ui_manager, uebung):
     pygame.display.flip()
     pygame.display.update()
     lfs_interface = ui_manager.os.lfs_interface
-    if uebung != "Rennrunde_fahren":
+    if uebung == "Ideal_Sicherheitslinie":
+        lfs_interface.send_commands_to_lfs([b"/track KY5"])
+    elif uebung != "Rennrunde_fahren":
         lfs_interface.send_commands_to_lfs([b"/track WE3X"])
     else:
         lfs_interface.send_commands_to_lfs([b"/track WE2"])
@@ -238,7 +240,10 @@ def start_b2_uebung(ui_manager, uebung):
     ui_manager.draw_starting()
     pygame.display.flip()
     pygame.display.update()
+    if uebung == "Ideal_Sicherheitslinie":
+        lfs_interface.send_commands_to_lfs([b"/laps 2"])
     time.sleep(1)
+
     ui_manager.starting_count = 3
     ui_manager.draw_starting()
     pygame.display.flip()
@@ -362,7 +367,7 @@ def start_freies_ueben(ui_manager):
 
 
 
-def start_abs_uebung(ui_manager, uebung):
+def start_abs_uebung(ui_manager):
     ui_manager.starting_count = 1
     ui_manager.draw_starting()
     pygame.display.flip()
@@ -380,7 +385,6 @@ def start_abs_uebung(ui_manager, uebung):
     ui_manager.draw_starting()
     pygame.display.flip()
     pygame.display.update()
-    lfs_interface.send_commands_to_lfs([b"/weather 1"])
     time.sleep(1)
     ui_manager.starting_count = 4
     ui_manager.draw_starting()
@@ -401,5 +405,13 @@ def start_abs_uebung(ui_manager, uebung):
     lfs_interface.send_commands_to_lfs([b"/join"])
     lfs_interface.send_commands_to_lfs([b"/setup Road_Abs"])
     time.sleep(0.4)
+    lfs_interface.send_commands_to_lfs([b"/ai"])
+    lfs_interface.abs_run = True
+
+    pygame.display.flip()
+    pygame.display.update()
+    ui_manager.close_screen()
     lfs_interface.send_commands_to_lfs([b"/ready"])
-    ui_manager.ready_for_start = uebung
+    time.sleep(1)
+    ui_manager.draw_buttons()
+    ui_manager.os.lfs_interface.track_uebung("ABS_NoABS")
