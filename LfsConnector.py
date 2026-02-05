@@ -327,6 +327,7 @@ class LFSConnection:
             pass
 
     def hit_object(self, insim, obh):
+        print("hit")
         self.hit_an_object = True
 
     def penalty_handling(self, insim, pen):
@@ -363,7 +364,7 @@ class LFSConnection:
     def run(self):
         self.insim = pyinsim.insim(b'127.0.0.1', 29999, Admin=b'', Prefix=b"$",
                                    Flags=pyinsim.ISF_MCI | pyinsim.ISF_HLV | pyinsim.ISF_OBH | pyinsim.ISF_LOCAL,
-                                   Interval=50)
+                                   Interval=100)
         self.insim.bind(pyinsim.ISP_LAP, self.get_laptimes)
         self.insim.bind(pyinsim.ISP_SPX, self.get_split_times)
         self.insim.bind(pyinsim.ISP_STA, self.insim_state)

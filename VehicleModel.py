@@ -154,30 +154,31 @@ class VehicleModel:
         self.eng_light = pyinsim.DL_ENGINE & packet.ShowLights > 0
 
     def update_outsim(self, packet):
-        self.angular_velocity = np.array(packet.AngVel)
-        #self.heading = packet.Heading taking MCI value instead
-        self.pitch = packet.Pitch
-        self.roll = packet.Roll
-        self.acceleration = np.array(packet.Accel)
-        self.velocity = np.array(packet.Vel)
-        self.position = np.array(packet.Pos)
-        self.steering_input = packet.Inputs[2]  # InputSteer
-        self.gear = packet.Gear
-        self.engine_angular_velocity, self.max_torque_at_velocity = packet.EngineData
-        self.current_lap_distance, self.indexed_distance = packet.Distance
-        self.steer_torque = packet.Extra[0]
-        for i, wheel in enumerate(packet.Wheels):
-            self.tire_data[i]["susp_deflect"] = wheel["SuspDeflect"]
-            self.tire_data[i]["steer"] = wheel["Steer"]
-            self.tire_data[i]["x_force"] = wheel["XForce"]
-            self.tire_data[i]["y_force"] = wheel["YForce"]
-            self.tire_data[i]["vertical_load"] = wheel["VerticalLoad"]
-            self.tire_data[i]["ang_vel"] = wheel["AngVel"]
-            self.tire_data[i]["air_temperature"] = wheel["AirTemp"]
-            self.tire_data[i]["slip_fraction"] = wheel["SlipFraction"]
-            self.tire_data[i]["is_touching_ground"] = wheel["Touching"] > 0
-
-        self.friction = 1  # Default asphalt
+        pass
+        # self.angular_velocity = np.array(packet.AngVel)
+        # #self.heading = packet.Heading taking MCI value instead
+        # self.pitch = packet.Pitch
+        # self.roll = packet.Roll
+        # self.acceleration = np.array(packet.Accel)
+        # self.velocity = np.array(packet.Vel)
+        # self.position = np.array(packet.Pos)
+        # self.steering_input = packet.Inputs[2]  # InputSteer
+        # self.gear = packet.Gear
+        # self.engine_angular_velocity, self.max_torque_at_velocity = packet.EngineData
+        # self.current_lap_distance, self.indexed_distance = packet.Distance
+        # self.steer_torque = packet.Extra[0]
+        # for i, wheel in enumerate(packet.Wheels):
+        #     self.tire_data[i]["susp_deflect"] = wheel["SuspDeflect"]
+        #     self.tire_data[i]["steer"] = wheel["Steer"]
+        #     self.tire_data[i]["x_force"] = wheel["XForce"]
+        #     self.tire_data[i]["y_force"] = wheel["YForce"]
+        #     self.tire_data[i]["vertical_load"] = wheel["VerticalLoad"]
+        #     self.tire_data[i]["ang_vel"] = wheel["AngVel"]
+        #     self.tire_data[i]["air_temperature"] = wheel["AirTemp"]
+        #     self.tire_data[i]["slip_fraction"] = wheel["SlipFraction"]
+        #     self.tire_data[i]["is_touching_ground"] = wheel["Touching"] > 0
+        #
+        # self.friction = 1  # Default asphalt
 
     def estimate_road_slope(self):
         pass

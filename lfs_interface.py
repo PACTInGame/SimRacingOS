@@ -405,6 +405,7 @@ class LFSInterface:
                 if restart or quit:
                     print("restart or quit")
                     break
+                time.sleep(0.2)
 
             if restart:
                 cleanup_and_restart()
@@ -414,10 +415,12 @@ class LFSInterface:
         def handle_practice():
             """Handle practice exercises (PracticeBL1 and PracticeWE2)"""
             while True:
+
                 restart, quit = handle_button_clicks()
                 if restart or quit:
                     print("restart or quit")
                     break
+                time.sleep(0.2)
 
             if restart:
                 cleanup_and_restart()
@@ -535,7 +538,7 @@ class LFSInterface:
                 elif (not understeering_r and not understeering_l) and understeering:
                     understeering = False
                     understeering_time = time.perf_counter() - understeering_timer
-                    if understeering_time > 0.2:
+                    if understeering_time > 0.22:
                         self.lfs_connector.hit_an_object = False
                         failed = time.perf_counter() if failed is None else failed
                         reason = "Du hast stark untersteuert."
@@ -552,6 +555,7 @@ class LFSInterface:
 
                 if quit:
                     break
+                time.sleep(0.1)
 
             if restart:
                 cleanup_and_restart()
@@ -950,7 +954,7 @@ class LFSInterface:
         time.sleep(0.5)
         pyautogui.click(3549, 671)
         time.sleep(0.5)
-        pyautogui.click(1467, 1233)
+        pyautogui.click(1748, 1377)
         time.sleep(1)
 
     def start_singleplayer_after_track(self):

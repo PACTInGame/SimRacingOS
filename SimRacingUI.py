@@ -170,6 +170,7 @@ class SimRacingUI:
                 self.current_screen = "starting"
                 self.draw_starting()
                 start_hotlap_blackwood(self)
+
             elif functionality == "b1_training":
                 self.current_screen = "b1_selection"
 

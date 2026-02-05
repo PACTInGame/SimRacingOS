@@ -9,7 +9,7 @@
 import struct
 import math
 
-INSIM_VERSION = 8
+INSIM_VERSION = 10
 MAX_PLAYERS = 40
 
 # Enum for packet types
@@ -460,7 +460,7 @@ class IS_ISI(object):
             IName    : A short name for your program
 
         """
-        self.Size = 44
+        self.Size = 11
         self.Type = ISP_ISI
         self.ReqI = ReqI
         self.Zero = 0
@@ -505,7 +505,7 @@ class IS_TINY(object):
             SubT : subtype from ``TINY_*`` enumeration (e.g. ``TINY_REN``)
 
         """
-        self.Size = 4
+        self.Size = 1
         self.Type = ISP_TINY
         self.ReqI = ReqI
         self.SubT = SubT
@@ -533,7 +533,7 @@ class IS_SMALL(object):
             UVal : value (e.g. for ``SMALL_SSP`` this would be the OutSim packet rate)
 
         """
-        self.Size = 8
+        self.Size = 2
         self.Type = ISP_SMALL
         self.ReqI = ReqI
         self.SubT = SubT
@@ -554,7 +554,7 @@ class IS_TTC(object):
     pack_s = struct.Struct('8B')
 
     def __init__(self, ReqI=0, SubT=TTC_NONE, UCID=0, B1=0, B2=0, B3=0):
-        self.Size = 8
+        self.Size = 2
         self.Type = ISP_TTC
         self.ReqI = ReqI
         self.SubT = SubT  # From TTC_*
@@ -596,7 +596,7 @@ class IS_SCH(object):
             Flags : bit 0 : SHIFT / bit 1 : CTRL
 
         """
-        self.Size = 8
+        self.Size = 2
         self.Type = ISP_SCH
         self.ReqI = ReqI
         self.Zero = 0
@@ -626,7 +626,7 @@ class IS_SFP(object):
             OffOn : 0 = off / 1 = on
 
         """
-        self.Size = 8
+        self.Size = 2
         self.Type = ISP_SFP
         self.ReqI = ReqI
         self.Zero = 0
@@ -653,7 +653,7 @@ class IS_SCC(object):
             InGameCam : InGameCam (as reported in StatePack)
 
         """
-        self.Size = 8
+        self.Size = 2
         self.Type = ISP_SCC
         self.ReqI = ReqI
         self.Zero = 0
@@ -689,7 +689,7 @@ class IS_CPP(object):
             Flags     : state flags from ``ISS_*``
 
         """
-        self.Size = 32
+        self.Size = 8
         self.Type = ISP_CPP
         self.ReqI = ReqI
         self.Zero = 0
@@ -738,6 +738,7 @@ class IS_MSO(object):
     def unpack(self, data):
         self.Size, self.Type, self.ReqI, self.Zero, self.UCID, self.PLID, self.UserType, self.TextStart = self.pack_s.unpack(
             data[:8])
+        self.Size = self.Size * 4
         self.Msg = struct.unpack('%dsx' % int(self.Size - 9), data[8:])[0]
         self.Msg = _eat_null_chars(self.Msg)
         return self
@@ -752,6 +753,8 @@ class IS_III(object):
     def unpack(self, data):
         self.Size, self.Type, self.ReqI, self.Zero, self.UCID, self.PLID, self.Sp2, self.Sp3 = self.pack_s.unpack(
             data[:8])
+        self.Size = self.Size * 4
+
         self.Msg = struct.unpack('%dsx' % self.Size - 9, data[8:])
         self.Msg = _eat_null_chars(self.Msg)
         return self
@@ -771,7 +774,7 @@ class IS_MST(object):
             Msg  : message (64 characters)
 
         """
-        self.Size = 68
+        self.Size = 17
         self.Type = ISP_MST
         self.ReqI = ReqI
         self.Zero = 0
@@ -798,7 +801,7 @@ class IS_MTC(object):
             Msg  : Message (128 characters)
 
         """
-        self.Size = 8
+        self.Size = 2
         self.Type = ISP_MTC
         self.ReqI = ReqI
         self.Sound = Sound
@@ -831,7 +834,7 @@ class IS_MOD(object):
             Height : 0 means go to window
 
         """
-        self.Size = 20
+        self.Size = 5
         self.Type = ISP_MOD
         self.ReqI = ReqI
         self.Zero = 0
@@ -1179,7 +1182,7 @@ class IS_REO(object):
             PLID : all PLIDs in new order
 
         """
-        self.Size = 4 + MAX_PLAYERS
+        self.Size = 1 + MAX_PLAYERS
         self.Type = ISP_REO
         self.ReqI = ReqI
         self.NumP = len(PLID)
@@ -1262,7 +1265,7 @@ class IS_MSX(object):
             Msg  : last byte must be zero
 
         """
-        self.Size = 100
+        self.Size = 25
         self.Type = ISP_MSX
         self.ReqI = ReqI
         self.Zero = 0
@@ -1287,7 +1290,7 @@ class IS_MSL(object):
             Msg   : Message
 
         """
-        self.Size = 132
+        self.Size = 33
         self.Type = ISP_MSL
         self.ReqI = ReqI
         self.Sound = Sound
@@ -1326,7 +1329,7 @@ class IS_BFN(object):
             Inst     : used internally by InSim
 
         """
-        self.Size = 8
+        self.Size = 2
         self.Type = ISP_BFN
         self.ReqI = ReqI
         self.SubT = SubT
@@ -1392,7 +1395,7 @@ class IS_BTN(object):
             Text    : 0 to 240 characters of text
 
         """
-        self.Size = 12
+        self.Size = 3
         self.Type = ISP_BTN
         self.ReqI = ReqI
         self.UCID = UCID
@@ -1408,7 +1411,8 @@ class IS_BTN(object):
 
     def pack(self):
         TEXT_SIZE = int(math.ceil(len(self.Text) / 4.0)) * 4
-        return self.pack_s.pack(self.Size + TEXT_SIZE, self.Type, self.ReqI, self.UCID, self.ClickID, self.Inst,
+        total_size = self.Size + (TEXT_SIZE // 4)  # self.Size is already /4, add text size /4
+        return self.pack_s.pack(total_size, self.Type, self.ReqI, self.UCID, self.ClickID, self.Inst,
                                 self.BStyle, self.TypeIn, self.L, self.T, self.W, self.H) + struct.pack(
             '%ds' % TEXT_SIZE, self.Text)
 
@@ -1458,7 +1462,7 @@ class IS_RIP(object):
             RName   : zero or replay name: last byte must be zero
 
         """
-        self.Size = 76
+        self.Size = 19
         self.Type = ISP_RIP
         self.ReqI = ReqI
         self.Error = Error
@@ -1496,7 +1500,7 @@ class IS_SSH(object):
             BMP   : name of screenshot file: last byte must be zero
 
         """
-        self.Size = 40
+        self.Size = 10
         self.Type = ISP_SSH
         self.ReqI = ReqI
         self.Error = Error
@@ -1558,12 +1562,16 @@ OBH_ON_SPOT = 8
 
 
 class IS_OBH(object):
-    pack_s = struct.Struct('4B2H4B2h2h4B')
+    # Old: '4B2H4B2h2h4B'
+    # New: Size(B) Type(B) ReqI(B) PLID(B) SpClose(H) SpW(H) Time(I) + CarContOBJ fields + X(h) Y(h) Zbyte(B) Sp1(B) Index(B) OBHFlags(B)
+    pack_s = struct.Struct('4B2HI4B2h2h4B')  # Changed 2H to HI (added SpW as H, Time is now I instead of in CarContOBJ)
 
     def unpack(self, data):
         self.C = CarContOBJ()
-        self.Size, self.Type, self.ReqI, self.PLID, self.SpClose, self.Time, self.C.Direction, self.C.Heading, self.C.Speed, self.C.Zbyte, self.C.X, self.C.Y, self.X, self.Y, self.Zbyte, self.Sp1, self.Index, self.OBHFlags = self.pack_s.unpack(
-            data)
+        self.Size, self.Type, self.ReqI, self.PLID, self.SpClose, self.SpW, self.Time, \
+        self.C.Direction, self.C.Heading, self.C.Speed, self.C.Zbyte, \
+        self.C.X, self.C.Y, \
+        self.X, self.Y, self.Zbyte, self.Sp1, self.Index, self.OBHFlags = self.pack_s.unpack(data)
         return self
 
 
@@ -1633,7 +1641,7 @@ class IS_OCO(object):
                         bit 3 (8) : green
 
         """
-        self.Size = 8
+        self.Size = 2
         self.Type = ISP_OCO
         self.ReqI = 0
         self.Zero = 0
@@ -1692,7 +1700,7 @@ class IS_AXM(object):
     pack_s = struct.Struct('8B')
 
     def __init__(self, ReqI=0, NumO=0, UCID=0, PMOAction=0, PMOFlags=0, Sp3=0, Info=[]):
-        self.Size = 8
+        self.Size = 2
         self.Type = ISP_OCO
         self.ReqI = ReqI
         self.NumO = NumO
@@ -1756,7 +1764,7 @@ class IS_PLC(object):
     pack_s = struct.Struct('8BI')
 
     def __init__(self, UCID=0, Cars=CAR_NONE):
-        self.Size = 12
+        self.Size = 3
         self.Type = ISP_PLC
         self.ReqI = 0
         self.Zero = 0
@@ -1805,7 +1813,7 @@ class IS_HCP(object):
     pack_s = struct.Struct('4B')
 
     def __init__(self, ReqI=0, Zero=0, Info=[]):
-        self.Size = 68
+        self.Size = 17
         self.Type = ISP_HCP
         self.ReqI = ReqI
         self.Zero = Zero
@@ -1838,7 +1846,7 @@ class IR_HLR(object):
     pack_s = struct.Struct('4B')
 
     def __init__(self, ReqI=0):
-        self.Size = 4
+        self.Size = 1
         self.Type = IRP_HLR
         self.ReqI = ReqI
         self.Sp0 = 0
@@ -1870,7 +1878,7 @@ class IR_SEL(object):
     pack_s = struct.Struct('4B31sx15sx15sx')
 
     def __init__(self, ReqI=0, HName=b'', Admin=b'', Spec=b''):
-        self.Size = 68
+        self.Size = 17
         self.Type = IRP_SEL
         self.ReqI = ReqI
         self.Zero = 0
@@ -1886,7 +1894,7 @@ class IR_ARQ(object):
     pack_s = struct.Struct('4B')
 
     def __init__(self, ReqI=0):
-        self.Size = 4
+        self.Size = 1
         self.Type = IRP_ARQ
         self.ReqI = ReqI
         self.Sp0 = 0

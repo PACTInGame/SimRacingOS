@@ -359,3 +359,47 @@ def start_freies_ueben(ui_manager):
     time.sleep(1)
     ui_manager.draw_buttons()
     ui_manager.os.lfs_interface.track_uebung("freies_ueben")
+
+
+
+def start_abs_uebung(ui_manager, uebung):
+    ui_manager.starting_count = 1
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    lfs_interface = ui_manager.os.lfs_interface
+    lfs_interface.send_commands_to_lfs([b"/track SO7"])
+    time.sleep(1)
+    time.sleep(1)
+    ui_manager.starting_count = 2
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    time.sleep(1)
+    ui_manager.starting_count = 3
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    lfs_interface.send_commands_to_lfs([b"/weather 1"])
+    time.sleep(1)
+    ui_manager.starting_count = 4
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    load_layout = f"/axload ABS_NoABS"
+    load_layout = load_layout.encode()
+    lfs_interface.send_commands_to_lfs([load_layout])
+    time.sleep(1)
+    ui_manager.starting_count = 5
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    lfs_interface.send_commands_to_lfs([b"/spec"])
+    time.sleep(0.2)
+    lfs_interface.send_commands_to_lfs([b"/car RB4"])
+    time.sleep(0.4)
+    lfs_interface.send_commands_to_lfs([b"/join"])
+    lfs_interface.send_commands_to_lfs([b"/setup Road_Abs"])
+    time.sleep(0.4)
+    lfs_interface.send_commands_to_lfs([b"/ready"])
+    ui_manager.ready_for_start = uebung

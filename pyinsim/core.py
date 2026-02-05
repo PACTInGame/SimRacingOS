@@ -42,7 +42,7 @@ __all__ = [
 
 # Constants.
 PYINSIM_VERSION = '2.1.0'
-INSIM_VERSION = 6
+INSIM_VERSION = 10
 _TCP_BUFFER_SIZE = 2048
 _UDP_BUFFER_SIZE = 512
 _TIMEOUT = 0.05
@@ -329,15 +329,16 @@ class _TcpSocket(asyncore.dispatcher):
             
     def handle_error(self):
         self._dispatch_to._handle_error()
-        
+
     def get_packets(self):
-        while self._recv_buff and len(self._recv_buff) >= self._recv_buff[0]:
-            size = self._recv_buff[0]
-            
-            # Check size is multiple of four.
+        while self._recv_buff and len(self._recv_buff) >= self._recv_buff[0] * 4:
+            size_field = self._recv_buff[0]  # Size / 4
+            size = size_field * 4  # Tatsächliche Bytes
+
+            # Check size is multiple of four (sollte immer passen)
             if size % 4 > 0:
                 raise InSimError('TCP packet size not a multiple of four')
-                    
+
             yield self._recv_buff[:size]
             self._recv_buff = self._recv_buff[size:]
         
