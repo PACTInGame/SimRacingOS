@@ -253,6 +253,7 @@ class LFSInterface:
             connector = self.lfs_connector
             checkpoint = 0
             failed = None
+            show_success = time.perf_counter()
 
             def check_speed():
                 if connector.vehicle_model.speed < MIN_SPEED:
@@ -304,6 +305,13 @@ class LFSInterface:
                     connector.crossed_checkpoint1 = False
                     connector.crossed_checkpoint2 = False
                     connector.came_to_standstill = False
+                elif self.lfs_connector.came_to_standstill and 0 < self.lfs_connector.distance_to_goal < 8.5:
+                    reason = f"Gut. Du stehst {round(self.lfs_connector.distance_to_goal, 2)}m weit weg."
+                    self.os.UI.draw_info_button(reason)
+                    show_success = time.perf_counter()
+
+                if 2 < time.perf_counter() - show_success < 3:
+                    self.os.UI.del_info_button()
 
                 if self.lfs_connector.came_to_standstill and self.lfs_connector.y_at_stop > 175 * 65536:
                     failed = time.perf_counter() if failed is None else failed
@@ -312,7 +320,7 @@ class LFSInterface:
                     connector.crossed_checkpoint1 = False
                     connector.crossed_checkpoint2 = False
                     connector.came_to_standstill = False
-                print(self.lfs_connector.full_brake_pedal)
+
                 if self.lfs_connector.came_to_standstill and not self.lfs_connector.full_brake_pedal:
                     failed = time.perf_counter() if failed is None else failed
                     reason = "Das war keine Vollbremsung."
@@ -472,6 +480,7 @@ class LFSInterface:
             uebersteuern_max_angle = 0
             uebersteuern_data = []
             avg_speed = [0, 0]
+            drift_show = time.perf_counter()
             while True:
                 brake = self.lfs_connector.vehicle_model.brake
                 heading = self.lfs_connector.vehicle_model.heading
@@ -487,10 +496,16 @@ class LFSInterface:
                     uebersteuern_time = time.perf_counter() - uebersteuern_timer
                     uebersteuern_distance = uebersteuern_time * 0.277 * (avg_speed[0] / avg_speed[1])
                     avg_speed = [0, 0]
-                    if 1 < uebersteuern_time < 5 < uebersteuern_distance:
+                    if 1 < uebersteuern_time and 5 < uebersteuern_distance:
                         uebersteuern_count += 1
                         uebersteuern_data.append([uebersteuern_time, uebersteuern_distance, uebersteuern_max_angle])
                         self.lfs_connector.drift_values = uebersteuern_data
+                        reason = f"Drift: {round(uebersteuern_time,1)}s, {round(uebersteuern_distance,1)}m, {round(uebersteuern_max_angle,1)} Grad."
+                        self.os.UI.draw_info_button(reason)
+                        uebersteuern_max_angle = 0
+                        drift_show = time.perf_counter()
+                if 2< time.perf_counter() - drift_show <3:
+                    self.os.UI.del_info_button()
 
                 if circular_difference(heading,
                                        direction) > 70 and self.lfs_connector.vehicle_model.speed > 5 and failed is None:

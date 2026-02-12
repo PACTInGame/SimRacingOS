@@ -58,10 +58,11 @@ def login_window():
 
                 elif event.key == pygame.K_RETURN:
                     q_pattern = re.compile(r'^[qQ]\d{6}$')
+                    name_pattern = re.compile(r'^[A-Za-z]{3,}$')
                     print(qnumber_text)
                     print(len(name_text), len(pin_text), q_pattern.match(qnumber_text))
                     if (len(name_text) > 0 and len(pin_text) == 4 and
-                        q_pattern.match(qnumber_text)):
+                        q_pattern.match(qnumber_text)) and name_pattern.match(name_text):
                         if pin_text == "3578":
                             pygame.quit()
                             return name_text, qnumber_text
@@ -70,7 +71,14 @@ def login_window():
                             show_error = True
                             pin_text = ""
                     else:
-                        error_message = "Invalid input! Please check all fields."
+                        if not q_pattern.match(qnumber_text):
+                            error_message = "Invalid Q-Number."
+                        elif not name_pattern.match(name_text):
+                            error_message = "Invalid Name."
+                        elif pin_text != "3578":
+                            error_message = "Invalid Pin."
+                        else:
+                            error_message = "Invalid input! Please check all fields."
                         show_error = True
 
                 elif event.key == pygame.K_BACKSPACE:
