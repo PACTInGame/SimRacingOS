@@ -7,6 +7,8 @@ import config
 from LfsConnector import LFSConnection
 import pyautogui
 
+from pyinsim import func
+
 
 class LFSInterface:
     def __init__(self, os):
@@ -310,7 +312,7 @@ class LFSInterface:
                     connector.crossed_checkpoint1 = False
                     connector.crossed_checkpoint2 = False
                     connector.came_to_standstill = False
-
+                print(self.lfs_connector.full_brake_pedal)
                 if self.lfs_connector.came_to_standstill and not self.lfs_connector.full_brake_pedal:
                     failed = time.perf_counter() if failed is None else failed
                     reason = "Das war keine Vollbremsung."
@@ -869,7 +871,16 @@ class LFSInterface:
                     command = command.encode()
                     self.send_commands_to_lfs([command])
                     ai_strength = setting
-
+                if self.lfs_connector.coordinates_ai and self.lfs_connector.vehicle_model.position_mci:
+                    distance = func.dist(self.lfs_connector.coordinates_ai, self.lfs_connector.vehicle_model.position_mci) / 65536
+                    if distance < 7:
+                        failed = time.perf_counter() if failed is None else failed
+                        reason = "Du bist zu dicht am Instruktor."
+                        self.os.UI.draw_info_button(reason)
+                    elif distance > 100:
+                        failed = time.perf_counter() if failed is None else failed
+                        reason = "Der Instruktor ist zu weit weg."
+                        self.os.UI.draw_info_button(reason)
                 if (connector.laps_done == 4 or
                         (failed is not None and failed < time.perf_counter() - FAILURE_DISPLAY_TIME) or
                         restart or quit):

@@ -47,6 +47,7 @@ class LFSConnection:
         self.y_at_stop = -1
         self.failed_brake = False
         self.display_hud = False
+        self.coordinates_ai = 0
 
 
     def outgauge_packet(self, outgauge, packet):
@@ -95,6 +96,8 @@ class LFSConnection:
         for car in mci.Info:
             if car.PLID == self.vehicleID:
                 self.vehicle_model.update_car_data(car)
+            else:
+                self.coordinates_ai = car.X, car.Y, car.Z
 
     def send_message(self, message):
         print(message, "sent")

@@ -110,7 +110,7 @@ class VehicleModel:
         self.throttle = packet.Throttle
         self.brake = packet.Brake
 
-        if self.connector.braking_possible and self.brake > 0.95 and (self.connector.brake_distance_start == (0,0,0) or self.connector.brake_distance_start == 0) and not self.connector.failed_brake:
+        if self.connector.braking_possible and self.brake > 0.90 and (self.connector.brake_distance_start == (0,0,0) or self.connector.brake_distance_start == 0) and not self.connector.failed_brake:
             self.connector.brake_distance_start = self.connector.vehicle_model.position_mci
             self.connector.full_brake_pedal = True
         else:
@@ -120,7 +120,7 @@ class VehicleModel:
         if self.connector.brake_distance_start != 0 and self.connector.brake_distance_start != (0,0,0):
             distance_since_brake_start = pyinsim.length(pyinsim.dist(self.position_mci,
                                             self.connector.brake_distance_start))
-            if self.brake < 0.9 and distance_since_brake_start > 3 and not self.connector.came_to_standstill and self.speed_mci > 3:
+            if self.brake < 0.8 and distance_since_brake_start > 3 and not self.connector.came_to_standstill and self.speed_mci > 3:
                 self.connector.full_brake_pedal = False
                 self.connector.failed_brake = True
 
