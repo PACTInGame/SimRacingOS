@@ -365,6 +365,46 @@ def start_freies_ueben(ui_manager):
     ui_manager.draw_buttons()
     ui_manager.os.lfs_interface.track_uebung("freies_ueben")
 
+def start_freies_fahren(ui_manager):
+    ui_manager.starting_count = 1
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    lfs_interface = ui_manager.os.lfs_interface
+    lfs_interface.send_commands_to_lfs([b"/track SO7"])
+    time.sleep(1)
+    ui_manager.starting_count = 2
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    time.sleep(2)
+    ui_manager.starting_count = 3
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    time.sleep(0.7)
+    lfs_interface.send_commands_to_lfs([b"/axclear"])
+    time.sleep(1)
+    ui_manager.starting_count = 4
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    lfs_interface.send_commands_to_lfs([b"/spec"])
+    time.sleep(0.2)
+    lfs_interface.send_commands_to_lfs([b"/car FZ5"])
+    time.sleep(0.4)
+    lfs_interface.send_commands_to_lfs([b"/join"])
+    lfs_interface.send_commands_to_lfs([b"/setup BL1_HL_120830"])
+    time.sleep(0.2)
+    ui_manager.starting_count = 5
+    ui_manager.draw_starting()
+    pygame.display.flip()
+    pygame.display.update()
+    ui_manager.close_screen()
+    lfs_interface.send_commands_to_lfs([b"/ready"])
+    time.sleep(1)
+    ui_manager.draw_buttons()
+    ui_manager.os.lfs_interface.track_uebung("freies_fahren")
 
 
 def start_abs_uebung(ui_manager):

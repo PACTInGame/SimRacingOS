@@ -162,9 +162,9 @@ class LFSInterface:
         def handle_emergency_brake():
             """Handle the emergency brake exercise (Notbremsung)"""
             if uebung == "Notbremsung":
-                MIN_SPEED = 75
+                MIN_SPEED = 67
             elif uebung == "Notbremsung_Ausweichen":
-                MIN_SPEED = 65
+                MIN_SPEED = 57
             else:
                 MIN_SPEED = 115
 
@@ -176,8 +176,6 @@ class LFSInterface:
             failed = None
 
             def check_speed():
-                print(connector.vehicle_model.speed)
-                print("MIN", MIN_SPEED)
                 if uebung == "Ausweichen":
                     self.lfs_connector.speeds.append(connector.vehicle_model.speed)
                 if connector.vehicle_model.speed < MIN_SPEED:
@@ -195,7 +193,7 @@ class LFSInterface:
                     if failed is not None:
                         self.os.UI.draw_info_button(reason)
                     if uebung == "Notbremsung_Ausweichen":
-                        MIN_SPEED = 75
+                        MIN_SPEED = 67
 
                 if len(connector.splittimes) == 2 and checkpoint == 1:
                     checkpoint += 1
@@ -204,7 +202,7 @@ class LFSInterface:
                     if failed is not None:
                         self.os.UI.draw_info_button(reason)
                     if uebung == "Notbremsung_Ausweichen":
-                        MIN_SPEED = 85
+                        MIN_SPEED = 77
 
                 if len(connector.splittimes) == 3 and checkpoint == 2:
                     checkpoint += 1
@@ -248,7 +246,7 @@ class LFSInterface:
 
         def handle_zielbremsung():
             """Handle the zielbremsung exercise """
-            MIN_SPEED = 75
+            MIN_SPEED = 67
             FAILURE_DISPLAY_TIME = 2  # seconds
             connector = self.lfs_connector
             checkpoint = 0
@@ -483,19 +481,14 @@ class LFSInterface:
                     uebersteuern_timer = time.perf_counter()
 
                 elif circular_difference(heading, direction) < 10 and uebersteuern:
-                    print("Oversteering end")
                     uebersteuern = False
                     uebersteuern_time = time.perf_counter() - uebersteuern_timer
-                    print(avg_speed)
                     uebersteuern_distance = uebersteuern_time * 0.277 * (avg_speed[0] / avg_speed[1])
-                    print(uebersteuern_distance, uebersteuern_time)
                     avg_speed = [0, 0]
                     if 1 < uebersteuern_time < 5 < uebersteuern_distance:
                         uebersteuern_count += 1
-                        print("Oversteering for: ", uebersteuern_time, "Distance: ", uebersteuern_distance)
                         uebersteuern_data.append([uebersteuern_time, uebersteuern_distance, uebersteuern_max_angle])
                         self.lfs_connector.drift_values = uebersteuern_data
-                        print(uebersteuern_data)
 
                 if circular_difference(heading,
                                        direction) > 70 and self.lfs_connector.vehicle_model.speed > 5 and failed is None:
@@ -514,20 +507,17 @@ class LFSInterface:
                     avg_speed[0] += self.lfs_connector.vehicle_model.speed
                     avg_speed[1] += 1
 
-                for i, tyre in enumerate(self.lfs_connector.vehicle_model.tire_data):
-                    if i == 2 or i == 3:
-                        steering = self.lfs_connector.vehicle_model.steering_input
-                        if (tyre.get("slip_fraction") < -0.007 and self.lfs_connector.vehicle_model.speed > 10 and
-                                (steering > 0.2 or steering < -0.2)):
-                            if i == 2:
-                                understeering_l = True
-                            elif i == 3:
-                                understeering_r = True
-                        else:
-                            if i == 2:
-                                understeering_l = False
-                            elif i == 3:
-                                understeering_r = False
+                steering = self.lfs_connector.vehicle_model.steering_input
+
+                if circular_difference(heading,
+                                       direction) < 6 and self.lfs_connector.vehicle_model.speed > 20 and (
+                        steering > 0.5 or steering < -0.5) and failed is None:
+                    understeering_r = True
+                    understeering_l = True
+                else:
+                    understeering_r = False
+                    understeering_l = False
+
                 if brake > 0.02:
                     understeering_r = False
                     understeering_l = False
@@ -597,6 +587,7 @@ class LFSInterface:
             understeering = False
             understeering_timer = time.perf_counter()
             understeering_count = 0
+            understeering_end_time = time.perf_counter()
             failed = None
             FAILURE_DISPLAY_TIME = 2  # seconds
 
@@ -604,25 +595,21 @@ class LFSInterface:
                 brake = self.lfs_connector.vehicle_model.brake
                 heading = self.lfs_connector.vehicle_model.heading
                 direction = self.lfs_connector.vehicle_model.direction
+                print(circular_difference(heading, direction))
                 if circular_difference(heading,
-                                       direction) > 8 and self.lfs_connector.vehicle_model.speed > 7 and failed is None:
+                                       direction) > 25 and self.lfs_connector.vehicle_model.speed > 20 and failed is None:
                     failed = time.perf_counter() if failed is None else failed
                     reason = "Dein Heck ist ausgebrochen."
                     self.os.UI.draw_info_button(reason)
-                for i, tyre in enumerate(self.lfs_connector.vehicle_model.tire_data):
-                    if i == 2 or i == 3:
-                        steering = self.lfs_connector.vehicle_model.steering_input
-                        if (tyre.get("slip_fraction") < -0.007 and self.lfs_connector.vehicle_model.speed > 10 and
-                                (steering > 0.2 or steering < -0.2)):
-                            if i == 2:
-                                understeering_l = True
-                            elif i == 3:
-                                understeering_r = True
-                        else:
-                            if i == 2:
-                                understeering_l = False
-                            elif i == 3:
-                                understeering_r = False
+                steering = self.lfs_connector.vehicle_model.steering_input
+                if circular_difference(heading,
+                                       direction) < 6 and self.lfs_connector.vehicle_model.speed > 20 and (steering > 0.5 or steering < -0.5) and failed is None:
+                    understeering_r = True
+                    understeering_l = True
+                else:
+                    understeering_r = False
+                    understeering_l = False
+
                 if brake > 0.02:
                     understeering_r = False
                     understeering_l = False
@@ -631,16 +618,22 @@ class LFSInterface:
                     failed = time.perf_counter() if failed is None else failed
                     reason = "Du hast eine Pylone getroffen."
                     self.os.UI.draw_info_button(reason)
+
                 if understeering_r and understeering_l and not understeering:
                     understeering = True
                     understeering_timer = time.perf_counter()
                     print("Understeering start")
+
                 elif (not understeering_r and not understeering_l) and understeering:
                     understeering = False
                     understeering_time = time.perf_counter() - understeering_timer
                     if understeering_time > 0.95:
                         understeering_count += 1
+                        self.os.UI.draw_info_button(f"Super, noch {3-understeering_count}x!")
                         print("Understeering for: ", understeering_time)
+                        understeering_end_time = time.perf_counter()
+                if 2 <time.perf_counter() - understeering_end_time < 3:
+                    self.os.UI.del_info_button()
 
                 restart, quit = handle_button_clicks()
                 if understeering_count == 3:
@@ -693,12 +686,14 @@ class LFSInterface:
             uebersteuern_max_angle = 0
             uebersteuern_data = []
             avg_speed = [0, 0]
+            uebersteuern_end_timer = time.perf_counter()
+            #TODO if uebun g== halbkreis drift, need longer drift
             while True:
                 brake = self.lfs_connector.vehicle_model.brake
                 heading = self.lfs_connector.vehicle_model.heading
                 direction = self.lfs_connector.vehicle_model.direction
                 if circular_difference(heading,
-                                       direction) > 10 and self.lfs_connector.vehicle_model.speed > 15 and not uebersteuern:
+                                       direction) > 10 and self.lfs_connector.vehicle_model.speed > 20 and not uebersteuern:
 
                     uebersteuern = True
                     uebersteuern_timer = time.perf_counter()
@@ -711,15 +706,30 @@ class LFSInterface:
                     uebersteuern_distance = uebersteuern_time * 0.277 * (avg_speed[0] / avg_speed[1])
                     print(uebersteuern_distance, uebersteuern_time)
                     avg_speed = [0, 0]
-                    if 1 < uebersteuern_time < 5 < uebersteuern_distance:
-                        uebersteuern_count += 1
-                        print("Oversteering for: ", uebersteuern_time, "Distance: ", uebersteuern_distance)
-                        uebersteuern_data.append([uebersteuern_time, uebersteuern_distance, uebersteuern_max_angle])
-                        print(uebersteuern_data)
-                    elif uebersteuern_time > 6:
-                        failed = time.perf_counter() if failed is None else failed
-                        reason = "Du bist zu lange ausgebrochen."
-                        self.os.UI.draw_info_button(reason)
+                    if uebung == "Halbkreis_drift":
+                        if 3 < uebersteuern_time and 15 < uebersteuern_distance:
+                            uebersteuern_count += 1
+                            print("Oversteering for: ", uebersteuern_time, "Distance: ", uebersteuern_distance)
+                            uebersteuern_data.append([uebersteuern_time, uebersteuern_distance, uebersteuern_max_angle])
+                            uebersteuern_end_timer = time.perf_counter()
+                            self.os.UI.draw_info_button(f"Super, noch {3-uebersteuern_count}x!")
+                        elif 3 > uebersteuern_time or uebersteuern_distance < 15:
+                            failed = time.perf_counter() if failed is None else failed
+                            reason = "Der Drift war zu kurz."
+                            self.os.UI.draw_info_button(reason)
+                    else:
+                        if 1 < uebersteuern_time < 5 < uebersteuern_distance:
+                            uebersteuern_count += 1
+                            print("Oversteering for: ", uebersteuern_time, "Distance: ", uebersteuern_distance)
+                            uebersteuern_data.append([uebersteuern_time, uebersteuern_distance, uebersteuern_max_angle])
+                            uebersteuern_end_timer = time.perf_counter()
+                            self.os.UI.draw_info_button(f"Super, noch {3-uebersteuern_count}x!")
+                        elif uebersteuern_time > 6:
+                            failed = time.perf_counter() if failed is None else failed
+                            reason = "Du bist zu lange ausgebrochen."
+                            self.os.UI.draw_info_button(reason)
+                if 2 < time.perf_counter() - uebersteuern_end_timer < 3:
+                    self.os.UI.del_info_button()
                 if circular_difference(heading,
                                        direction) > 75 and self.lfs_connector.vehicle_model.speed > 5 and failed is None:
                     failed = time.perf_counter() if failed is None else failed
@@ -730,21 +740,16 @@ class LFSInterface:
                     uebersteuern_max_angle = max(uebersteuern_max_angle, circular_difference(heading, direction))
                     avg_speed[0] += self.lfs_connector.vehicle_model.speed
                     avg_speed[1] += 1
+                steering = self.lfs_connector.vehicle_model.steering_input
 
-                for i, tyre in enumerate(self.lfs_connector.vehicle_model.tire_data):
-                    if i == 2 or i == 3:
-                        steering = self.lfs_connector.vehicle_model.steering_input
-                        if (tyre.get("slip_fraction") < -0.007 and self.lfs_connector.vehicle_model.speed > 10 and
-                                (steering > 0.2 or steering < -0.2)):
-                            if i == 2:
-                                understeering_l = True
-                            elif i == 3:
-                                understeering_r = True
-                        else:
-                            if i == 2:
-                                understeering_l = False
-                            elif i == 3:
-                                understeering_r = False
+                if circular_difference(heading,
+                                       direction) < 6 and self.lfs_connector.vehicle_model.speed > 20 and (
+                        steering > 0.5 or steering < -0.5) and failed is None:
+                    understeering_r = True
+                    understeering_l = True
+                else:
+                    understeering_r = False
+                    understeering_l = False
                 if brake > 0.02:
                     understeering_r = False
                     understeering_l = False
@@ -762,7 +767,7 @@ class LFSInterface:
                 elif (not understeering_r and not understeering_l) and understeering:
                     understeering = False
                     understeering_time = time.perf_counter() - understeering_timer
-                    if understeering_time > 0.2:
+                    if understeering_time > 0.3:
                         self.lfs_connector.hit_an_object = False
                         failed = time.perf_counter() if failed is None else failed
                         reason = "Du hast stark untersteuert."
@@ -784,6 +789,18 @@ class LFSInterface:
                 cleanup_and_quit()
 
         def handle_freies_ueben():
+            while True:
+                restart, quit = handle_button_clicks()
+                if restart or quit:
+                    break
+                time.sleep(0.1)
+
+            if restart:
+                cleanup_and_restart()
+            elif quit:
+                cleanup_and_quit()
+
+        def handle_freies_fahren():
             while True:
                 restart, quit = handle_button_clicks()
                 if restart or quit:
@@ -1041,7 +1058,9 @@ class LFSInterface:
             "Ideal_Sicherheitslinie": handle_ideal_sicherheitslinie,
             "Rennrunde_fahren": handle_instructor_b2,
             "Notbremsung_220": handle_emergency_brake_b2,
-            "ABS_NoABS": handle_abs_no_abs
+            "ABS_NoABS": handle_abs_no_abs,
+            "freies_fahren": handle_freies_fahren,
+
         }
 
         # Run the appropriate exercise handler

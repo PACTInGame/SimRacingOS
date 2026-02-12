@@ -1924,84 +1924,144 @@ class IR_ERR(object):
 
 
 class OutSimPack(object):
-    pack_s = struct.Struct('4sII')
+    # Struct formats
+    header_s = struct.Struct('<4s')      # OSO_HEADER: 4 chars
+    id_s = struct.Struct('<i')           # OSO_ID: 1 int
+    time_s = struct.Struct('<I')         # OSO_TIME: 1 unsigned int
+    main_s = struct.Struct('<3f3f3f3f3i')  # OSO_MAIN: AngVel(3f) Heading/Pitch/Roll(3f) Accel(3f) Vel(3f) Pos(3i)
+    inputs_s = struct.Struct('<5f')      # OSO_INPUTS: Throttle, Brake, InputSteer, Clutch, Handbrake
+    drive_s = struct.Struct('<4B2f')     # OSO_DRIVE: Gear, Sp1, Sp2, Sp3, EngineAngVel, MaxTorqueAtVel
+    distance_s = struct.Struct('<2f')    # OSO_DISTANCE: CurrentLapDist, IndexedDistance
+    wheel_s = struct.Struct('<7f4B2f')   # OSO_WHEELS: 7 floats + 4 bytes + 2 floats = 40 bytes
+    extra1_s = struct.Struct('<2f')      # OSO_EXTRA_1: SteerTorque, Spare
+
+    # OutSim Opts flags
+    OSO_HEADER   = 0x001
+    OSO_ID       = 0x002
+    OSO_TIME     = 0x004
+    OSO_MAIN     = 0x008
+    OSO_INPUTS   = 0x010
+    OSO_DRIVE    = 0x020
+    OSO_DISTANCE = 0x040
+    OSO_WHEELS   = 0x080
+    OSO_EXTRA_1  = 0x100
 
     def __init__(self):
         self.Header = b''
         self.ID = 0
         self.Time = 0
-        self.AngVel = [0.0, 0.0, 0.0]
+        self.AngVel = (0.0, 0.0, 0.0)
         self.Heading = 0.0
         self.Pitch = 0.0
         self.Roll = 0.0
-        self.Accel = [0.0, 0.0, 0.0]
-        self.Vel = [0.0, 0.0, 0.0]
-        self.Pos = [0.0, 0.0, 0.0]
-        self.Inputs = [0.0, 0.0, 0.0, 0.0, 0.0]  # Throttle, Brake, InputSteer, Clutch, Handbrake
+        self.Accel = (0.0, 0.0, 0.0)
+        self.Vel = (0.0, 0.0, 0.0)
+        self.Pos = (0, 0, 0)
+        self.Inputs = (0.0, 0.0, 0.0, 0.0, 0.0)
         self.Gear = 0
-        self.EngineData = [0.0, 0.0]  # EngineAngVel, MaxTorqueAtVel
-        self.Distance = [0.0, 0.0]  # CurrentLapDist, IndexedDistance
+        self.EngineAngVel = 0.0
+        self.MaxTorqueAtVel = 0.0
+        self.CurrentLapDist = 0.0
+        self.IndexedDistance = 0.0
         self.Wheels = []
-        self.Extra = [0.0, 0.0]  # SteerTorque, Spare
+        self.SteerTorque = 0.0
+        self.Spare = 0.0
 
-    def unpack(self, data):
+    def unpack(self, data, os_opts=0x1ff):
+        """Unpack OutSim data based on OutSim Opts flags.
+
+        Args:
+            data: Raw bytes received from OutSim UDP socket
+            os_opts: OutSim Opts value from cfg.txt (hex), default 0x1ff (all fields)
+        """
         size = len(data)
-        if size < 12:  # Minimum size for header, ID, and Time
-            return self
+        offset = 0
 
-        self.Header, self.ID, self.Time = self.pack_s.unpack(data[:12])
-        remaining_data = data[12:]
-        remaining_size = size - 12
+        # Debug: uncomment to verify packet size
+        # print(f"OutSim packet size: {size}")
 
-        if remaining_size >= 36:
-            self.AngVel = struct.unpack('<3f', remaining_data[:12])
-            self.Heading, self.Pitch, self.Roll = struct.unpack('<3f', remaining_data[12:24])
-            self.Accel = struct.unpack('<3f', remaining_data[24:36])
-            remaining_data = remaining_data[36:]
-            remaining_size -= 36
+        if os_opts & self.OSO_HEADER:
+            if offset + self.header_s.size > size:
+                return self
+            self.Header = self.header_s.unpack_from(data, offset)[0]
+            offset += self.header_s.size
 
-        if remaining_size >= 24:
-            self.Vel = struct.unpack('<3f', remaining_data[:12])
-            self.Pos = struct.unpack('<3f', remaining_data[12:24])
-            remaining_data = remaining_data[24:]
-            remaining_size -= 24
+        if os_opts & self.OSO_ID:
+            if offset + self.id_s.size > size:
+                return self
+            self.ID = self.id_s.unpack_from(data, offset)[0]
+            offset += self.id_s.size
 
-        if remaining_size >= 20:
-            self.Inputs = struct.unpack('<5f', remaining_data[:20])
-            remaining_data = remaining_data[20:]
-            remaining_size -= 20
+        if os_opts & self.OSO_TIME:
+            if offset + self.time_s.size > size:
+                return self
+            self.Time = self.time_s.unpack_from(data, offset)[0]
+            offset += self.time_s.size
 
-        if remaining_size >= 20:
-            self.Gear, _, _, _ = struct.unpack('<4B', remaining_data[:4])
-            self.EngineData = struct.unpack('<2f', remaining_data[4:12])
-            self.Distance = struct.unpack('<2f', remaining_data[12:20])
-            remaining_data = remaining_data[20:]
-            remaining_size -= 20
+        if os_opts & self.OSO_MAIN:
+            if offset + self.main_s.size > size:
+                return self
+            d = self.main_s.unpack_from(data, offset)
+            self.AngVel = d[0:3]
+            self.Heading = d[3]
+            self.Pitch = d[4]
+            self.Roll = d[5]
+            self.Accel = d[6:9]
+            self.Vel = d[9:12]
+            self.Pos = d[12:15]       # 3 ints (fixed point, 1m = 65536)
+            offset += self.main_s.size
+
+        if os_opts & self.OSO_INPUTS:
+            if offset + self.inputs_s.size > size:
+                return self
+            self.Inputs = self.inputs_s.unpack_from(data, offset)
+            offset += self.inputs_s.size
+
+        if os_opts & self.OSO_DRIVE:
+            if offset + self.drive_s.size > size:
+                return self
+            d = self.drive_s.unpack_from(data, offset)
+            self.Gear = d[0]
+            # d[1], d[2], d[3] are spare bytes
+            self.EngineAngVel = d[4]
+            self.MaxTorqueAtVel = d[5]
+            offset += self.drive_s.size
+
+        if os_opts & self.OSO_DISTANCE:
+            if offset + self.distance_s.size > size:
+                return self
+            self.CurrentLapDist, self.IndexedDistance = self.distance_s.unpack_from(data, offset)
+            offset += self.distance_s.size
 
         self.Wheels = []
-        wheel_size = 40  # 10 floats per wheel
-        for _ in range(4):
-            if remaining_size >= wheel_size:
-                wheel_data = struct.unpack('<10f', remaining_data[:wheel_size])
+        if os_opts & self.OSO_WHEELS:
+            for _ in range(4):
+                if offset + self.wheel_s.size > size:
+                    break
+                d = self.wheel_s.unpack_from(data, offset)
                 self.Wheels.append({
-                    'SuspDeflect': wheel_data[0],
-                    'Steer': wheel_data[1],
-                    'XForce': wheel_data[2],
-                    'YForce': wheel_data[3],
-                    'VerticalLoad': wheel_data[4],
-                    'AngVel': wheel_data[5],
-                    'LeanRelToRoad': wheel_data[6],
-                    'AirTemp': wheel_data[7],
-                    'SlipFraction': wheel_data[8],
-                    'Touching': wheel_data[9],
+                    'SuspDeflect':    d[0],
+                    'Steer':          d[1],
+                    'XForce':         d[2],
+                    'YForce':         d[3],
+                    'VerticalLoad':   d[4],
+                    'AngVel':         d[5],
+                    'LeanRelToRoad':  d[6],
+                    'AirTemp':        d[7],       # byte (0-255, degrees C)
+                    'SlipFraction':   d[8],       # byte (0-255)
+                    'Touching':       d[9],       # byte
+                    'Sp3':            d[10],      # byte spare
+                    'SlipRatio':      d[11],
+                    'TanSlipAngle':   d[12],
                 })
-                remaining_data = remaining_data[wheel_size:]
-                remaining_size -= wheel_size
-            else:
-                break
+                offset += self.wheel_s.size
 
-        if remaining_size >= 8:
-            self.Extra = struct.unpack('<2f', remaining_data[:8])
+        if os_opts & self.OSO_EXTRA_1:
+            if offset + self.extra1_s.size > size:
+                return self
+            self.SteerTorque, self.Spare = self.extra1_s.unpack_from(data, offset)
+            offset += self.extra1_s.size
+
         return self
 
 
