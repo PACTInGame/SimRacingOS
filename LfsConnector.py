@@ -348,8 +348,6 @@ class LFSConnection:
                     self.braking_possible = True
                 self.brake_speed_start = self.vehicle_model.speed
             elif cp == 1:
-                print("CP1U")
-                print(self.came_to_standstill)
                 self.braking_possible = False
                 self.crossed_checkpoint2 = True
                 self.distance_to_goal = -1
@@ -360,6 +358,7 @@ class LFSConnection:
                 self.came_to_standstill = False
                 self.full_brake_pedal = False
                 self.y_at_stop = -1
+                self.vehicle_model.connector.brake_distance_start = 0
 
 
 
