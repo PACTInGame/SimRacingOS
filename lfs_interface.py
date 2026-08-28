@@ -20,6 +20,8 @@ class LFSInterface:
         pyautogui.FAILSAFE = False
         self.switched_to_menu = False
         self.abs_run = True
+        self.restart_pending = False
+        self.uebung_active = False
 
 
     def start_lfs(self):
@@ -59,8 +61,31 @@ class LFSInterface:
         return True
 
     def track_uebung(self, uebung):
+        """Run an exercise and repeat it for as long as a restart is requested.
+
+        A restart used to be done by calling track_uebung() again from inside
+        the running exercise handler. Every restart therefore added another
+        frame (plus its handler and its closures) to the call stack and kept
+        the whole state of the aborted attempt alive. Exercises that restart
+        themselves on every mistake - Doppelspurwechsel restarts on every cone
+        that is hit - piled those up quickly. Looping here keeps the stack flat
+        and makes each attempt start from a clean slate.
+
+        Args:
+            uebung: Name of the exercise to run
         """
-        Track and manage different driving exercises.
+        self.uebung_active = True
+        try:
+            while True:
+                self.restart_pending = False
+                self._run_uebung(uebung)
+                if not self.restart_pending:
+                    return
+        finally:
+            self.uebung_active = False
+
+    def _run_uebung(self, uebung):
+        """Run a single attempt of an exercise.
 
         Args:
             uebung: Name of the exercise to run
@@ -84,6 +109,9 @@ class LFSInterface:
         self.switched_to_menu = False
         self.lfs_connector.failed_brake = False
         self.lfs_connector.y_at_stop = -1
+        # Clicks that arrived while the previous attempt was being torn down
+        # would otherwise fire immediately in this one.
+        self.lfs_connector.clear_button_clicks()
 
 
         def handle_button_clicks():
@@ -98,8 +126,19 @@ class LFSInterface:
                 self.lfs_connector.buttons_clicked.remove(2)
             if not quit_requested:
                 if self.switched_to_menu:
-                    quit_requested = True
                     self.switched_to_menu = False
+                    if self.lfs_connector.on_track:
+                        # The state packet said "menu" but LFS is back on track
+                        # (a restart, a reload, a short blip). Not a real quit.
+                        print("Ignoring short menu blip - still on track.")
+                    else:
+                        quit_requested = True
+            if not self.lfs_connector.insim_alive:
+                # Without InSim there is no lap, no checkpoint and no button
+                # click left to wait for - go back to the menu instead of
+                # spinning here forever.
+                print("InSim connection lost - ending exercise.")
+                quit_requested = True
             return restart_requested, quit_requested
 
         def cleanup_and_quit(hotlap=False):
@@ -115,8 +154,14 @@ class LFSInterface:
             else:
                 self.send_commands_to_lfs([b"/entry"])
 
-            while self.lfs_connector.on_track:
-                pass
+            # Bounded wait: if the state packet never arrives (InSim gone, the
+            # command was not accepted) this used to spin forever on the main
+            # thread with the buttons already deleted and no UI coming back.
+            wait_until = time.perf_counter() + 10
+            while self.lfs_connector.on_track and time.perf_counter() < wait_until:
+                time.sleep(0.05)
+            if self.lfs_connector.on_track:
+                print("LFS did not return to the menu in time - continuing anyway.")
             if hotlap:
                 self.start_singleplayer_after_track()
             self.os.lfs_interface.lfs_connector.splittimes = []
@@ -130,7 +175,11 @@ class LFSInterface:
             self.lfs_connector.splittimes = []
             time.sleep(0.5)
             self.send_commands_to_lfs([b"/restart"])
-            self.track_uebung(uebung)
+            time.sleep(0.5)
+            # LFS drops InSim buttons in some of these transitions; make sure
+            # "Restart Task" / "Back to Menu" are on screen for the next try.
+            self.os.UI.draw_buttons()
+            self.restart_pending = True
 
         def handle_steering_wheel():
             """Handle the steering wheel exercise (Lenkradhaltung)"""

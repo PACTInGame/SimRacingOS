@@ -301,6 +301,11 @@ class _TcpSocket(asyncore.dispatcher):
         self._dispatch_to = dispatch_to
         self._send_buff = b''
         self._recv_buff = b''
+        # The send buffer is written from the application thread and rewritten
+        # by asyncore's own thread in handle_write(); without a lock the two
+        # read-modify-write cycles can lose bytes and desynchronise the InSim
+        # packet stream, which makes LFS drop the connection.
+        self._send_lock = threading.Lock()
         
     def __len__(self):
         return len(self._recv_buff)
@@ -312,14 +317,16 @@ class _TcpSocket(asyncore.dispatcher):
         self._dispatch_to._handle_close()
         
     def send(self, data):
-        self._send_buff += data
+        with self._send_lock:
+            self._send_buff += data
         
     def writable(self):
         return bool(self._send_buff)
     
     def handle_write(self):
-        sent = asyncore.dispatcher.send(self, self._send_buff)
-        self._send_buff = self._send_buff[sent:]
+        with self._send_lock:
+            sent = asyncore.dispatcher.send(self, self._send_buff)
+            self._send_buff = self._send_buff[sent:]
         
     def handle_read(self):
         data = self.recv(_TCP_BUFFER_SIZE)

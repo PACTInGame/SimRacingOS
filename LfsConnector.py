@@ -1,9 +1,33 @@
+import functools
 import json
 import os
 import threading
 import time
+import traceback
+
 import pyinsim
 from VehicleModel import VehicleModel
+
+
+def safe_callback(func):
+    """Keep an exception inside a packet callback from killing the connection.
+
+    pyinsim runs on asyncore: if a bound callback raises, asyncore calls
+    handle_error() on the socket, which closes it. For the InSim socket that
+    means LFS drops the connection and removes every button we created, while
+    the exercise loop keeps polling flags that will never change again - the
+    game keeps running but SimRacingOS is deaf and shows nothing.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            print(f"Error in InSim callback {func.__name__}:")
+            traceback.print_exc()
+
+    return wrapper
 
 
 class LFSConnection:
@@ -48,8 +72,12 @@ class LFSConnection:
         self.failed_brake = False
         self.display_hud = False
         self.coordinates_ai = 0
+        self.time_menu_open = 0
+        self.insim_alive = True
+        self._send_lock = threading.Lock()
 
 
+    @safe_callback
     def outgauge_packet(self, outgauge, packet):
         # TODO handle outgauge timeout
         self.game_time = packet.Time
@@ -59,9 +87,11 @@ class LFSConnection:
 
         self.vehicle_model.update_outgauge(packet)
 
+    @safe_callback
     def outsim_packet(self, outsim, packet):
         self.vehicle_model.update_outsim(packet)
 
+    @safe_callback
     def button_click(self, insim, btc):
         print(self.buttons_clicked)
         self.buttons_clicked.append(btc.ClickID)
@@ -73,25 +103,32 @@ class LFSConnection:
         """
         if type(text) == str:
             text = text.encode()
-        self.insim.send(
-            pyinsim.ISP_BTN,
-            ReqI=255,
-            ClickID=click_id,
-            BStyle=style | 3,
-            Inst=inst,
-            T=t,
-            L=l,
-            W=w,
-            H=h,
-            Text=text,
-            TypeIn=typeIn)
+        if self.insim is None or not self.insim_alive:
+            return
+        with self._send_lock:
+            self.insim.send(
+                pyinsim.ISP_BTN,
+                ReqI=255,
+                ClickID=click_id,
+                BStyle=style | 3,
+                Inst=inst,
+                T=t,
+                L=l,
+                W=w,
+                H=h,
+                Text=text,
+                TypeIn=typeIn)
 
     def del_button(self, click_id):
-        self.insim.send(pyinsim.ISP_BFN,
-                        ReqI=255,
-                        ClickID=click_id
-                        )
+        if self.insim is None or not self.insim_alive:
+            return
+        with self._send_lock:
+            self.insim.send(pyinsim.ISP_BFN,
+                            ReqI=255,
+                            ClickID=click_id
+                            )
 
+    @safe_callback
     def get_car_data(self, insim, mci):
         for car in mci.Info:
             if car.PLID == self.vehicleID:
@@ -101,12 +138,27 @@ class LFSConnection:
 
     def send_message(self, message):
         print(message, "sent")
-        self.insim.send(pyinsim.ISP_MST,
-                        Msg=message)
+        if self.insim is None or not self.insim_alive:
+            print("InSim is not connected - command dropped.")
+            return
+        with self._send_lock:
+            self.insim.send(pyinsim.ISP_MST,
+                            Msg=message)
+
+    def clear_button_clicks(self):
+        """Drop queued clicks so they cannot trigger the next exercise run."""
+        self.buttons_clicked.clear()
+
+    def connection_lost(self, insim, *args):
+        """LFS closed the InSim connection (or asyncore killed the socket)."""
+        self.insim_alive = False
+        self.is_connected = False
+        print("InSim connection to LFS lost.")
 
     def stop(self):
         pyinsim.closeall()
 
+    @safe_callback
     def get_pings(self, insim, ping):
         if not self.is_connected:
             self.is_connected = True
@@ -230,11 +282,13 @@ class LFSConnection:
         with open(filename, 'w') as file:
             json.dump(data, file, indent=4)
 
+    @safe_callback
     def hot_lap_validity(self, insim, hlv):
         if len(self.splittimes) == 2:
             self.next_hotlap_invalid = True
         self.current_lap_invalid = True
 
+    @safe_callback
     def get_split_times(self, insim, spx):
         print("Split-time")
         if len(self.splittimes) == 0 and spx.Split == 1:
@@ -248,6 +302,7 @@ class LFSConnection:
                 self.splittimes = []
                 self.splittimes.append(spx.Split)
 
+    @safe_callback
     def get_laptimes(self, insim, lap):
         if lap.PLID == self.vehicleID:
             self.laps_done += 1
@@ -279,6 +334,7 @@ class LFSConnection:
 
         return checkpoints.get(first_two_bits, -1)
 
+    @safe_callback
     def insim_state(self, insim, sta):
         """
         this method receives the is_sta packet from LFS. It contains information about the game state, that will
@@ -288,7 +344,8 @@ class LFSConnection:
         def start_game_insim():
             print("Game started")
             self.on_track = True
-            insim.bind(pyinsim.ISP_MCI, self.get_car_data)
+            if not insim.isbound(pyinsim.ISP_MCI, self.get_car_data):
+                insim.bind(pyinsim.ISP_MCI, self.get_car_data)
             insim.send(pyinsim.ISP_TINY, ReqI=255, SubT=pyinsim.TINY_NPL)
             self.start_outgauge()
             self.start_outsim()
@@ -299,44 +356,69 @@ class LFSConnection:
             self.os.lfs_interface.switched_to_menu = True
             self.time_menu_open = time.time()
             self.on_track = False
-            insim.unbind(pyinsim.ISP_MCI, self.get_car_data)
+            if insim.isbound(pyinsim.ISP_MCI, self.get_car_data):
+                insim.unbind(pyinsim.ISP_MCI, self.get_car_data)
             self.display_hud = False
             self.del_button(100)
             self.del_button(101)
             self.del_button(102)
 
-
-        flags = [int(i) for i in str("{0:b}".format(sta.Flags))]
+        # Only ISS_GAME tells us whether the player is on track.
+        #
+        # This used to be read as `flags[-1] == 1 and flags[-15] == 1` on the
+        # unpadded binary string of sta.Flags, i.e. ISS_GAME *and* ISS_VISIBLE
+        # ("InSim buttons visible"), with the additional twist that any Flags
+        # value below 16384 (ISS_VISIBLE and ISS_TEXT_ENTRY both clear) made
+        # the string shorter than 15 characters and went straight to the
+        # "we are in the menu" branch. ISS_VISIBLE has nothing to do with
+        # being on track - LFS clears it whenever it hides the InSim buttons,
+        # e.g. when the user toggles them with SHIFT+I - so a running race
+        # could be mistaken for a return to the menu.
         self.in_game_cam = sta.InGameCam
-        if len(flags) >= 15:
-            game = flags[-1] == 1 and flags[-15] == 1
+        game = bool(sta.Flags & pyinsim.ISS_GAME) and not (sta.Flags & pyinsim.ISS_REPLAY)
 
-            if not self.on_track and game:
-                start_game_insim()
-
-            elif self.on_track and not game:
-                start_menu_insim()
-
-        elif self.on_track:
+        if not self.on_track and game:
+            start_game_insim()
+        elif self.on_track and not game:
             start_menu_insim()
 
-        self.text_entry = len(flags) >= 16 and flags[-16] == 1
+        self.text_entry = bool(sta.Flags & pyinsim.ISS_TEXT_ENTRY)
         self.track = sta.Track
 
+    @safe_callback
     def message_handling(self, insim, mso):
         try:
             message = mso.Msg.decode()
         except:
             pass
 
+    @safe_callback
+    def button_function(self, insim, bfn):
+        """React to LFS clearing or re-requesting our InSim buttons.
+
+        The user can hide/clear all InSim buttons in LFS (SHIFT+I). LFS then
+        deletes them and tells us via BFN_USER_CLEAR / BFN_REQUEST. Without
+        redrawing them here the "Restart Task" and "Back to Menu" buttons stay
+        gone for the rest of the exercise.
+        """
+        if bfn.SubT in (pyinsim.BFN_USER_CLEAR, pyinsim.BFN_REQUEST):
+            interface = getattr(self.os, "lfs_interface", None)
+            ui = getattr(self.os, "UI", None)
+            if interface is not None and ui is not None and interface.uebung_active:
+                print("InSim buttons were cleared by the user - redrawing them.")
+                ui.draw_buttons()
+
+    @safe_callback
     def hit_object(self, insim, obh):
         print("hit")
         self.hit_an_object = True
 
+    @safe_callback
     def penalty_handling(self, insim, pen):
         print(pen.Reason)
         self.penalty = True
 
+    @safe_callback
     def insim_checkpoints(self, insim, uco):
         if uco.UCOAction == pyinsim.UCO_CP_FWD:
             cp = self.get_checkpoint(uco.Info.Flags)
@@ -378,6 +460,10 @@ class LFSConnection:
         self.insim.bind(pyinsim.ISP_OBH, self.hit_object)
         self.insim.bind(pyinsim.ISP_UCO, self.insim_checkpoints)
         self.insim.bind(pyinsim.ISP_PEN, self.penalty_handling)
+        self.insim.bind(pyinsim.ISP_BFN, self.button_function)
+        self.insim.bind(pyinsim.EVT_CLOSE, self.connection_lost)
+        self.insim.bind(pyinsim.EVT_ERROR, self.connection_lost)
+        self.insim_alive = True
         self.start_outgauge()
         self.start_outsim()
         pyinsim.run()

@@ -227,6 +227,8 @@ class SimRacingUI:
         elif self.current_screen == "b1_selection" or self.current_screen == "explain_b1":
             functions = self.get_functions_b1_training()
             functionality = functions.get(position)
+            if functionality is None:
+                return
             self.current_explain = functionality
             self.current_screen = "explain_b1"
             if functionality == "back_to_menu":
@@ -237,6 +239,8 @@ class SimRacingUI:
         elif self.current_screen == "b2_selection" or self.current_screen == "explain_b2":
             functions = self.get_functions_b2_training()
             functionality = functions.get(position)
+            if functionality is None:
+                return
             self.current_explain = functionality
             self.current_screen = "explain_b2"
             if functionality == "back_to_menu":
@@ -253,7 +257,7 @@ class SimRacingUI:
                 if pos[0] < mouse_pos[0] < pos[0] + 2261 and pos[1] < mouse_pos[1] < pos[1] + 115:
                     return pos
         elif self.current_screen == "b2_selection" or self.current_screen == "explain_b2":
-            for pos, _ in self.get_functions_b1_training().items():
+            for pos, _ in self.get_functions_b2_training().items():
                 if pos[0] < mouse_pos[0] < pos[0] + 2261 and pos[1] < mouse_pos[1] < pos[1] + 115:
                     return pos
         return None
